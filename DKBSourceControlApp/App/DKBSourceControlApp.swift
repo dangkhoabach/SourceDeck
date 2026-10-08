@@ -17,7 +17,17 @@ struct DKBSourceControlApp: App {
         .commands {
             // One main window (plan D4): every repository is a sidebar entry
             // of it, so File › New Window would only open a duplicate.
-            CommandGroup(replacing: .newItem) {}
+            CommandGroup(replacing: .newItem) {
+                Button("Add Repository…") { AppServices.shared.repositories?.chooseFoldersToAdd() }
+                    .keyboardShortcut("o")
+                Button("Scan Folder…") { AppServices.shared.repositories?.isScanSheetPresented = true }
+                    .keyboardShortcut("o", modifiers: [.command, .shift])
+            }
+            CommandGroup(before: .sidebar) {
+                Button("Dashboard") { AppServices.shared.repositories?.selection = .dashboard }
+                    .keyboardShortcut("0")
+                Divider()
+            }
         }
 
         Settings {

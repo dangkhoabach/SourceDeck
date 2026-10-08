@@ -1,33 +1,74 @@
+import AppKit
 import DKBSourceControlCore
 import SwiftUI
 
-/// Main window: repositories sidebar | working copy / history | diff (plan §7.1).
-/// The three columns are placeholders until Phase 3 fills them.
+/// The main window once git and the database are ready; until then, what
+/// is missing, said plainly.
 struct ContentView: View {
     private let services = AppServices.shared
 
     var body: some View {
-        NavigationSplitView {
-            List {
-                Label("Dashboard", systemImage: "square.grid.2x2")
-                Section("Repositories") {
-                    Text("No repositories yet")
-                        .foregroundStyle(.secondary)
-                }
+        Group {
+            if let list = services.repositories {
+                MainWindowView(list: list)
+            } else {
+                StartupStatusView(git: services.git, databaseError: services.database.failure)
             }
-            .navigationSplitViewColumnWidth(min: 200, ideal: 220)
-        } content: {
-            ContentUnavailableView("Select a repository", systemImage: "arrow.triangle.branch")
-                .navigationSplitViewColumnWidth(min: 380, ideal: 480)
-        } detail: {
-            StartupStatusView(git: services.git, databaseError: services.database.failure)
         }
         .frame(minWidth: 1100, minHeight: 700)
     }
 }
 
-/// What stops the app from working, said plainly — or nothing once git is
-/// ready and the database is open.
+/// Sidebar of repositories | the dashboard or one repository (plan §7.1),
+/// with the operation log as an inspector.
+private struct MainWindowView: View {
+    @Bindable var list: RepositoryList
+    @AppStorage("showsOperationLog") private var showsLog = false
+
+    var body: some View {
+        NavigationSplitView {
+            RepositorySidebar(list: list)
+                .navigationSplitViewColumnWidth(min: 200, ideal: 240, max: 360)
+        } detail: {
+            if let model = list.selectedModel {
+                RepositoryView(model: model, showsLog: $showsLog)
+            } else {
+                DashboardView(list: list)
+            }
+        }
+        .inspector(isPresented: $showsLog) {
+            OperationLogView(log: list.log)
+                .inspectorColumnWidth(min: 280, ideal: 360, max: 560)
+        }
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    showsLog.toggle()
+                } label: {
+                    Label("Log", systemImage: "list.bullet.rectangle")
+                }
+                .keyboardShortcut("l", modifiers: [.command, .option])
+                .help("Show or hide the git output of fetch, pull and push (⌥⌘L)")
+            }
+        }
+        .sheet(isPresented: $list.isScanSheetPresented) {
+            ScanFolderSheet(list: list)
+        }
+        .alert("Not a git repository", isPresented: Binding(get: { !list.rejectedFolders.isEmpty },
+                                                            set: { if !$0 { list.rejectedFolders = [] } })) {
+            Button("OK") {}
+        } message: {
+            Text(list.rejectedFolders.joined(separator: ", "))
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            // Coming back from the editor or Terminal is when things changed.
+            Task { await list.refreshAll() }
+        }
+    }
+}
+
+/// Shown instead of the window's content while git is looked for, or when
+/// git or the database can't be used.
 private struct StartupStatusView: View {
     let git: AppServices.GitState
     let databaseError: Error?
@@ -41,10 +82,8 @@ private struct StartupStatusView: View {
             }
         } else {
             switch git {
-            case .resolving:
+            case .resolving, .ready:
                 ProgressView("Looking for git…")
-            case .ready:
-                ContentUnavailableView("No file selected", systemImage: "doc.text.magnifyingglass")
             case .unsupported(let version):
                 ContentUnavailableView {
                     Label("git \(version.description) is too old", systemImage: "exclamationmark.triangle")

@@ -22,6 +22,8 @@ final class AppServices {
     /// like an empty repository list (same reasoning as DKB Monitor).
     @ObservationIgnored let database: Result<AppDatabase, Error>
     private(set) var git: GitState = .resolving
+    /// Created once git is usable and the database is open.
+    private(set) var repositories: RepositoryList?
 
     private init() {
         database = Result { try AppDatabase(path: AppDatabaseLocation.productionPath().path) }
@@ -33,7 +35,9 @@ final class AppServices {
         let environment = await GitEnvironment.resolve()
         let git = GitProcess(environment: environment)
         switch try? await git.version() {
-        case let version? where version.isSupported: self.git = .ready(git, version)
+        case let version? where version.isSupported:
+            self.git = .ready(git, version)
+            if case .success(let database) = database { repositories = RepositoryList(database: database, git: git) }
         case let version?: self.git = .unsupported(version)
         case nil: self.git = .unavailable(path: environment.gitURL.path)
         }

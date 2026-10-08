@@ -46,6 +46,17 @@ public struct RepositoryStore: Sendable {
         ValueObservation.tracking { db in try Self.ordered.fetchAll(db) }
     }
 
+    /// The list now, then again after every change — without the caller
+    /// needing GRDB.
+    public func updates() -> AsyncThrowingStream<[RepositoryRecord], Error> {
+        AsyncThrowingStream { continuation in
+            let cancellable = observation().start(in: dbQueue, scheduling: .async(onQueue: Self.updatesQueue),
+                                                  onError: { continuation.finish(throwing: $0) },
+                                                  onChange: { continuation.yield($0) })
+            continuation.onTermination = { _ in cancellable.cancel() }
+        }
+    }
+
     /// Adding a path that is already in the list returns the existing record
     /// instead of failing on the UNIQUE constraint, so "add" can simply
     /// select it. New repositories go to the end of the list, named after
@@ -65,6 +76,35 @@ public struct RepositoryStore: Sendable {
     public func remove(id: String) throws {
         try dbQueue.write { db in _ = try RepositoryRecord.deleteOne(db, key: id) }
     }
+
+    /// An empty name puts the folder name back.
+    public func rename(id: String, to name: String) throws {
+        try dbQueue.write { db in
+            guard var record = try RepositoryRecord.fetchOne(db, key: id) else { return }
+            let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+            record.name = trimmed.isEmpty ? URL(fileURLWithPath: record.path).lastPathComponent : trimmed
+            try record.update(db)
+        }
+    }
+
+    /// Same arguments as SwiftUI's `onMove`; every record is renumbered so
+    /// the order stays a plain 0…n-1.
+    public func move(fromOffsets source: IndexSet, toOffset destination: Int) throws {
+        try dbQueue.write { db in
+            var records = try Self.ordered.fetchAll(db)
+            let moving = source.map { records[$0] }
+            for index in source.sorted(by: >) { records.remove(at: index) }
+            let insertAt = destination - source.count(where: { $0 < destination })
+            records.insert(contentsOf: moving, at: insertAt)
+            for (order, var record) in records.enumerated() where record.sortOrder != order {
+                record.sortOrder = order
+                try record.update(db)
+            }
+        }
+    }
+
+    /// Serial, so changes arrive in the order they happened.
+    private static let updatesQueue = DispatchQueue(label: "DKBSourceControlCore.RepositoryStore.updates")
 
     private static let ordered = RepositoryRecord.order(Column("sort_order"), Column("name").collating(.localizedCaseInsensitiveCompare))
 }

@@ -6,6 +6,8 @@ import SwiftUI
 struct SettingsView: View {
     @AppStorage(ThemePreference.key) private var themeRaw = ThemePreference.system.rawValue
     @AppStorage(AppLocale.key) private var languageRaw = AppLocale.systemDefault.rawValue
+    @AppStorage(AppSettings.pullModeKey) private var pullModeRaw = PullMode.fastForwardOnly.rawValue
+    @AppStorage(AppSettings.autoFetchMinutesKey) private var autoFetchMinutes = 0
     private let services = AppServices.shared
 
     var body: some View {
@@ -25,6 +27,25 @@ struct SettingsView: View {
                     Text("EN").tag(AppLocale.en)
                 }
                 .pickerStyle(.segmented)
+            }
+
+            Section("Remote") {
+                Picker("Pull", selection: $pullModeRaw) {
+                    Text("Fast-forward only").tag(PullMode.fastForwardOnly.rawValue)
+                    Text("Rebase my commits").tag(PullMode.rebase.rawValue)
+                }
+                Picker("Fetch automatically", selection: $autoFetchMinutes) {
+                    ForEach(AppSettings.autoFetchChoices, id: \.self) { minutes in
+                        if minutes == 0 {
+                            Text("Off").tag(0)
+                        } else {
+                            Text("Every \(minutes) minutes").tag(minutes)
+                        }
+                    }
+                }
+                Text("Pull never creates a merge commit. With fast-forward only, a branch that has its own new commits is left for you to decide.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             Section("Git") {
@@ -52,5 +73,6 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .frame(width: 480)
         .onChange(of: themeRaw) { ThemePreference.apply() }
+        .onChange(of: autoFetchMinutes) { services.repositories?.scheduleAutoFetch(minutes: autoFetchMinutes) }
     }
 }

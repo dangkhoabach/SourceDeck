@@ -1,12 +1,248 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "$ %@" : {
+      "shouldTranslate" : false
+    },
+    "%@ (no commits yet)" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (chưa có commit)"
+          }
+        }
+      }
+    },
+    "%@ s" : {
+      "shouldTranslate" : false
+    },
+    "%lld changed" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld đã sửa"
+          }
+        }
+      }
+    },
+    "%lld conflicted" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld xung đột"
+          }
+        }
+      }
+    },
+    "%lld new" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld mới"
+          }
+        }
+      }
+    },
+    "%lld staged" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld đã stage"
+          }
+        }
+      }
+    },
+    "Add" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thêm"
+          }
+        }
+      }
+    },
+    "Add %lld Repositories" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thêm %lld repository"
+          }
+        }
+      }
+    },
+    "Add a repository or scan a folder for repositories" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thêm một repository hoặc quét thư mục để tìm repository"
+          }
+        }
+      }
+    },
+    "Add a repository, scan a folder for them, or drop folders on the sidebar." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thêm một repository, quét một thư mục để tìm, hoặc kéo thả thư mục vào sidebar."
+          }
+        }
+      }
+    },
+    "Add Repository…" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thêm repository…"
+          }
+        }
+      }
+    },
+    "Already in the list" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đã có trong danh sách"
+          }
+        }
+      }
+    },
+    "Another git process is using this repository. Wait for it to finish, then try again." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Một tiến trình git khác đang dùng repository này. Đợi nó xong rồi thử lại."
+          }
+        }
+      }
+    },
     "Appearance" : {
       "localizations" : {
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Giao diện"
+          }
+        }
+      }
+    },
+    "Bisecting" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đang bisect"
+          }
+        }
+      }
+    },
+    "Branch" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Branch"
+          }
+        }
+      }
+    },
+    "Bring the remote's new commits into this branch (⇧⌘L)" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đưa các commit mới trên remote vào branch này (⇧⌘L)"
+          }
+        }
+      }
+    },
+    "Cancel" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Huỷ"
+          }
+        }
+      }
+    },
+    "Changes" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thay đổi"
+          }
+        }
+      }
+    },
+    "Cherry-picking" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đang cherry-pick"
+          }
+        }
+      }
+    },
+    "Choose Folder…" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn thư mục…"
+          }
+        }
+      }
+    },
+    "Clean" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sạch"
+          }
+        }
+      }
+    },
+    "Clear" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xoá log"
+          }
+        }
+      }
+    },
+    "Commits to pull" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Commit cần pull"
+          }
+        }
+      }
+    },
+    "Commits to push" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Commit cần push"
           }
         }
       }
@@ -41,6 +277,26 @@
         }
       }
     },
+    "Detached HEAD at %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HEAD tách rời tại %@"
+          }
+        }
+      }
+    },
+    "Dismiss" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đóng"
+          }
+        }
+      }
+    },
     "DKB Source Control needs git %@ or later. Update Xcode or the Command Line Tools." : {
       "localizations" : {
         "vi" : {
@@ -51,8 +307,88 @@
         }
       }
     },
+    "Download new commits from the remote without changing your files (⇧⌘F)" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tải commit mới từ remote mà không đổi file của bạn (⇧⌘F)"
+          }
+        }
+      }
+    },
     "EN" : {
       "shouldTranslate" : false
+    },
+    "Every %lld minutes" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mỗi %lld phút"
+          }
+        }
+      }
+    },
+    "Fast-forward only" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chỉ fast-forward"
+          }
+        }
+      }
+    },
+    "Fetch" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fetch"
+          }
+        }
+      }
+    },
+    "Fetch All" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fetch tất cả"
+          }
+        }
+      }
+    },
+    "Fetch automatically" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tự động fetch"
+          }
+        }
+      }
+    },
+    "Fetch every repository from its remote (⇧⌘F)" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fetch mọi repository từ remote của nó (⇧⌘F)"
+          }
+        }
+      }
+    },
+    "Fetch, pull and push show what git said here." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fetch, pull và push sẽ hiện nguyên văn output của git ở đây."
+          }
+        }
+      }
     },
     "From your login shell" : {
       "localizations" : {
@@ -64,10 +400,10 @@
         }
       }
     },
-    "git" : {
+    "Git" : {
       "shouldTranslate" : false
     },
-    "Git" : {
+    "git" : {
       "shouldTranslate" : false
     },
     "git %@ is too old" : {
@@ -76,6 +412,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "git %@ quá cũ"
+          }
+        }
+      }
+    },
+    "git couldn't be started." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Không chạy được git."
+          }
+        }
+      }
+    },
+    "git couldn't sign in to the remote. Check the credentials saved in Keychain or your SSH key." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "git không đăng nhập được vào remote. Kiểm tra thông tin đăng nhập lưu trong Keychain hoặc SSH key."
+          }
+        }
+      }
+    },
+    "git didn't finish in time and was stopped." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "git chạy quá lâu nên đã bị dừng."
           }
         }
       }
@@ -90,6 +456,26 @@
         }
       }
     },
+    "git output" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Output của git"
+          }
+        }
+      }
+    },
+    "git reported an error." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "git báo lỗi."
+          }
+        }
+      }
+    },
     "Language" : {
       "localizations" : {
         "vi" : {
@@ -100,12 +486,42 @@
         }
       }
     },
+    "Last commit" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Commit gần nhất"
+          }
+        }
+      }
+    },
+    "Leave it empty to use the folder name." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Để trống để dùng tên thư mục."
+          }
+        }
+      }
+    },
     "Light" : {
       "localizations" : {
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sáng"
+          }
+        }
+      }
+    },
+    "Log" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Log"
           }
         }
       }
@@ -130,12 +546,42 @@
         }
       }
     },
-    "No file selected" : {
+    "Merging" : {
       "localizations" : {
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Chưa chọn file"
+            "value" : "Đang merge"
+          }
+        }
+      }
+    },
+    "Name" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tên"
+          }
+        }
+      }
+    },
+    "No git output yet" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chưa có output git nào"
+          }
+        }
+      }
+    },
+    "No repositories found" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Không tìm thấy repository nào"
           }
         }
       }
@@ -150,12 +596,102 @@
         }
       }
     },
+    "Not a git repository" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Không phải git repository"
+          }
+        }
+      }
+    },
+    "not published" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "chưa publish"
+          }
+        }
+      }
+    },
     "Nothing at %@ answered `git --version`. Install the Command Line Tools with `xcode-select --install`." : {
       "localizations" : {
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Không có gì ở %@ trả lời `git --version`. Hãy cài Command Line Tools bằng `xcode-select --install`."
+          }
+        }
+      }
+    },
+    "Off" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tắt"
+          }
+        }
+      }
+    },
+    "OK" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        }
+      }
+    },
+    "Only folders up to two levels down are searched." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chỉ tìm trong thư mục sâu tối đa hai cấp."
+          }
+        }
+      }
+    },
+    "Open In" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở trong"
+          }
+        }
+      }
+    },
+    "Open in %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở trong %@"
+          }
+        }
+      }
+    },
+    "Open on GitHub" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở trên GitHub"
+          }
+        }
+      }
+    },
+    "Open the repository in Finder, a terminal, an editor or on GitHub" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở repository trong Finder, terminal, trình soạn thảo hoặc trên GitHub"
           }
         }
       }
@@ -170,6 +706,186 @@
         }
       }
     },
+    "Publish" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Publish"
+          }
+        }
+      }
+    },
+    "Publish “%@” to origin?" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Publish “%@” lên origin?"
+          }
+        }
+      }
+    },
+    "Pull" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pull"
+          }
+        }
+      }
+    },
+    "Pull never creates a merge commit. With fast-forward only, a branch that has its own new commits is left for you to decide." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pull không bao giờ tạo merge commit. Với chế độ chỉ fast-forward, nếu branch có commit riêng thì để bạn tự quyết."
+          }
+        }
+      }
+    },
+    "Push" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Push"
+          }
+        }
+      }
+    },
+    "Read the repository's status again (⌘R)" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đọc lại trạng thái của repository (⌘R)"
+          }
+        }
+      }
+    },
+    "Read the status of every repository again (⌘R)" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đọc lại trạng thái của mọi repository (⌘R)"
+          }
+        }
+      }
+    },
+    "Rebase my commits" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rebase commit của tôi"
+          }
+        }
+      }
+    },
+    "Rebasing" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đang rebase"
+          }
+        }
+      }
+    },
+    "Refresh" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Làm mới"
+          }
+        }
+      }
+    },
+    "Refresh All" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Làm mới tất cả"
+          }
+        }
+      }
+    },
+    "Remote" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remote"
+          }
+        }
+      }
+    },
+    "Remove" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xoá"
+          }
+        }
+      }
+    },
+    "Remove from List…" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xoá khỏi danh sách…"
+          }
+        }
+      }
+    },
+    "Remove “%@” from the list?" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xoá “%@” khỏi danh sách?"
+          }
+        }
+      }
+    },
+    "Rename" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đổi tên"
+          }
+        }
+      }
+    },
+    "Rename Repository" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đổi tên repository"
+          }
+        }
+      }
+    },
+    "Rename…" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đổi tên…"
+          }
+        }
+      }
+    },
     "Repositories" : {
       "localizations" : {
         "vi" : {
@@ -180,12 +896,92 @@
         }
       }
     },
-    "Select a repository" : {
+    "Reverting" : {
       "localizations" : {
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Chọn một repository"
+            "value" : "Đang revert"
+          }
+        }
+      }
+    },
+    "Scan" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quét"
+          }
+        }
+      }
+    },
+    "Scan Folder for Repositories" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quét thư mục tìm repository"
+          }
+        }
+      }
+    },
+    "Scan Folder…" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quét thư mục…"
+          }
+        }
+      }
+    },
+    "Send this branch's new commits to the remote (⇧⌘P)" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gửi các commit mới của branch này lên remote (⇧⌘P)"
+          }
+        }
+      }
+    },
+    "Show in Finder" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiện trong Finder"
+          }
+        }
+      }
+    },
+    "Show Log" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xem log"
+          }
+        }
+      }
+    },
+    "Show or hide the git output of fetch, pull and push (⌥⌘L)" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiện hoặc ẩn output git của fetch, pull và push (⌥⌘L)"
+          }
+        }
+      }
+    },
+    "Something went wrong." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đã xảy ra sự cố."
           }
         }
       }
@@ -200,12 +996,82 @@
         }
       }
     },
+    "The branch has no upstream yet. It will be pushed to origin and tracked from now on." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Branch chưa có upstream. Nó sẽ được push lên origin và theo dõi từ giờ."
+          }
+        }
+      }
+    },
+    "The change no longer matches the file. Refresh and try again." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thay đổi không còn khớp với file. Làm mới rồi thử lại."
+          }
+        }
+      }
+    },
+    "The folder and its files stay on disk." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thư mục và các file vẫn còn nguyên trên đĩa."
+          }
+        }
+      }
+    },
+    "The folder was moved or deleted" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thư mục đã bị chuyển hoặc xoá"
+          }
+        }
+      }
+    },
+    "The remote can't be reached: there is no remote named origin, or its address is wrong." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Không kết nối được remote: không có remote tên origin, hoặc địa chỉ của nó sai."
+          }
+        }
+      }
+    },
+    "The remote has commits you don't have yet. Pull first, then push." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remote có commit mà bạn chưa có. Hãy pull trước rồi push."
+          }
+        }
+      }
+    },
     "The repository list can't be opened" : {
       "localizations" : {
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Không mở được danh sách repository"
+          }
+        }
+      }
+    },
+    "The server refused the push, for example a protected branch." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Server từ chối push, ví dụ branch được bảo vệ."
           }
         }
       }
@@ -220,7 +1086,89 @@
         }
       }
     },
+    "There are conflicts to resolve before you can continue." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Có xung đột cần giải quyết trước khi tiếp tục."
+          }
+        }
+      }
+    },
+    "This branch has commits that aren't merged anywhere else, so it was kept." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Branch này có commit chưa được merge vào đâu khác nên được giữ lại."
+          }
+        }
+      }
+    },
+    "This branch has no upstream yet. Push it once to publish it." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Branch này chưa có upstream. Hãy push một lần để publish nó."
+          }
+        }
+      }
+    },
+    "This folder is not a git repository any more." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thư mục này không còn là git repository."
+          }
+        }
+      }
+    },
+    "Uncommitted changes" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Có thay đổi chưa commit"
+          }
+        }
+      }
+    },
     "VI" : {
+      "shouldTranslate" : false
+    },
+    "Your branch and the remote both have new commits. Pull with rebase (Settings › Remote) or resolve it in Sourcetree." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Branch của bạn và remote đều có commit mới. Hãy pull bằng rebase (Settings › Remote) hoặc xử lý trong Sourcetree."
+          }
+        }
+      }
+    },
+    "Your local changes would be overwritten. Commit or stash them first." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thay đổi trên máy sẽ bị ghi đè. Hãy commit hoặc stash trước."
+          }
+        }
+      }
+    },
+    "·" : {
+      "shouldTranslate" : false
+    },
+    "↑%lld" : {
+      "shouldTranslate" : false
+    },
+    "→ %@" : {
+      "shouldTranslate" : false
+    },
+    "↓%lld" : {
       "shouldTranslate" : false
     }
   },

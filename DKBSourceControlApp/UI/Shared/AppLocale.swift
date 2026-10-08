@@ -18,4 +18,13 @@ enum AppLocale: String, CaseIterable, Identifiable {
     static var systemDefault: AppLocale {
         Locale.current.language.languageCode?.identifier == "vi" ? .vi : .en
     }
+
+    /// The `.lproj` bundle of the in-app language, for `String(localized:bundle:)`
+    /// (ported from DKB Clamshell). `String(localized:)` alone reads the
+    /// *system* language and ignores the `\.locale` override the views get,
+    /// so text AppKit draws itself — the window title — goes through this.
+    static var bundle: Bundle {
+        let language = UserDefaults.standard.string(forKey: key).flatMap(AppLocale.init(rawValue:)) ?? systemDefault
+        return Bundle.main.path(forResource: language.rawValue, ofType: "lproj").flatMap(Bundle.init(path:)) ?? .main
+    }
 }

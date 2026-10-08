@@ -18,7 +18,9 @@ import Testing
         ("error: corrupt patch at <stdin>:13", .patchDoesNotApply),
         ("error: the branch 'topic' is not fully merged", .branchNotFullyMerged),
         ("fatal: not a git repository (or any of the parent directories): .git", .notARepository),
-        ("fatal: There is no tracking information for the current branch.", .other),
+        ("fatal: 'origin' does not appear to be a git repository\nfatal: Could not read from remote repository.", .remoteNotFound),
+        ("There is no tracking information for the current branch.\nPlease specify which branch you want to merge with.", .noUpstream),
+        ("error: pathspec 'x' did not match any file(s) known to git", .other),
     ])
     func classifies(output: String, kind: GitCommandError.Kind) {
         #expect(GitErrorClassifier.classify(output) == kind)

@@ -5,6 +5,10 @@ import Foundation
 public struct GitCommandError: Error, Sendable, Equatable {
     public enum Kind: Sendable, Equatable {
         case authenticationFailed
+        /// No remote of that name, or its address leads nowhere.
+        case remoteNotFound
+        /// Pull on a branch that was never published.
+        case noUpstream
         case indexLocked
         /// Push refused: the remote has commits this branch doesn't.
         case nonFastForward
@@ -44,6 +48,8 @@ enum GitErrorClassifier {
         (.notARepository, ["not a git repository"]),
         (.authenticationFailed, ["could not read Username", "could not read Password", "Authentication failed",
                                  "Permission denied (publickey", "terminal prompts disabled", "Invalid username or token"]),
+        (.remoteNotFound, ["does not appear to be a git repository"]),
+        (.noUpstream, ["There is no tracking information"]),
         (.indexLocked, ["index.lock': File exists"]),
         (.remoteRejected, ["[remote rejected]", "hook declined"]),
         (.nonFastForward, ["(fetch first)", "(non-fast-forward)", "Updates were rejected because"]),

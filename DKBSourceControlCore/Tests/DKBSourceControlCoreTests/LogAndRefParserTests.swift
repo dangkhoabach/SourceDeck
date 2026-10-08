@@ -35,6 +35,16 @@ import Testing
         #expect(commit.message == "+ Fix Bug +\n - README.md: the release date is 10/2024, not 09/2024")
     }
 
+    @Test func titleOfAGitRuleMessageAddsTheFirstDetail() {
+        func commit(_ message: String) -> Commit {
+            Commit(oid: "a", parents: [], authorName: "", authorEmail: "", authorDate: .now, commitDate: .now, refs: [], message: message)
+        }
+        #expect(commit("+ Fix Bug +\n - Fix login not returning token\n  + Add null check").title == "Fix Bug · Fix login not returning token")
+        #expect(commit("+ Update +").title == "+ Update +")
+        #expect(commit("Merge branch 'feature'").title == "Merge branch 'feature'")
+        #expect(commit("+ Update +\n\nbody").title == "+ Update +")
+    }
+
     @Test func bodyAfterABlankLine() {
         let raw = "abc\u{1f}p\u{1f}A\u{1f}a@e\u{1f}2026-01-01T00:00:00Z\u{1f}2026-01-01T00:00:00Z\u{1f}\u{1f}second\n\nbody line 1\nbody line 2\n\0"
         let commit = LogParser.parse(Data(raw.utf8))[0]
