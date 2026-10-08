@@ -129,3 +129,9 @@ xcodebuild -project DKBSourceControlNative.xcodeproj -scheme DKBSourceControlApp
 
 The only third-party dependency is [GRDB](https://github.com/groue/GRDB.swift),
 for the list of added repositories and the commit drafts.
+
+## Releasing
+
+`./scripts/release.sh <version>` tests, builds a signed universal app and a
+DMG into `release-output/`; `./scripts/install-local.sh` installs it into
+`/Applications`. See [`docs/release.md`](docs/release.md).
