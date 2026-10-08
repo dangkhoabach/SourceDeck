@@ -1,0 +1,283 @@
+import Foundation
+
+public struct OperationOutput: Sendable, Equatable {
+    public let stdout: String
+    public let stderr: String
+}
+
+public enum DiffArea: Sendable, Equatable {
+    /// Work tree against the index.
+    case unstaged
+    /// Index against HEAD.
+    case staged
+    /// A file git doesn't track yet, shown as all added.
+    case untracked
+    /// What a commit changed against its first parent.
+    case commit(String)
+}
+
+public enum PatchMode: Sendable {
+    case stage, unstage, discard
+}
+
+public enum PullMode: String, Sendable, CaseIterable {
+    case fastForwardOnly, rebase
+}
+
+/// One work tree, and every git command the app runs in it (plan §5.3).
+///
+/// Writes run one at a time, in the order they were asked for: an actor
+/// alone doesn't guarantee that (its async methods interleave at every
+/// `await`), and two `git add` racing for `index.lock` would fail one of
+/// them. Reads don't queue — they take no lock (`GIT_OPTIONAL_LOCKS=0`).
+public actor GitRepository {
+    public nonisolated let root: URL
+    public nonisolated let git: GitProcess
+    private var gitDirectory: URL?
+    private var writeQueue: Task<Void, Never>?
+
+    static let localTimeout = Duration.seconds(30)
+    static let networkTimeout = Duration.seconds(120)
+    /// Fixed so the user's diff config can't change what the parser and
+    /// `git apply` see: prefixes, colour, external tools, text conversion.
+    static let diffOptions = ["--no-color", "--no-ext-diff", "--no-textconv", "-M", "-U3", "--src-prefix=a/", "--dst-prefix=b/"]
+    /// Paths from the file list are file names, never patterns: a file
+    /// called "*.txt" or ":(exclude)x" must mean only itself. Given per
+    /// command, not as `GIT_LITERAL_PATHSPECS` for every one: `stash push -u`
+    /// relies on pathspec magic internally and stops clearing untracked
+    /// files under it.
+    static let literal = "--literal-pathspecs"
+    /// A merge is shown against its first parent: what the merge brought in.
+    static let firstParent = "--diff-merges=first-parent"
+
+    public init(root: URL, git: GitProcess) {
+        self.root = root
+        self.git = git
+    }
+
+    /// The repository containing `url`, opened at its top level.
+    public static func open(_ url: URL, git: GitProcess) async throws -> GitRepository {
+        let arguments = ["rev-parse", "--show-toplevel"]
+        let result = try await git.run(arguments, in: url, readOnly: true)
+        guard result.succeeded else { throw GitCommandError(arguments: arguments, result: result) }
+        let path = result.stdoutText.trimmingCharacters(in: .newlines)
+        return GitRepository(root: URL(fileURLWithPath: path, isDirectory: true), git: git)
+    }
+
+    // MARK: - Reads
+
+    public func status() async throws -> RepositoryStatus {
+        let result = try await run(StatusParser.arguments, readOnly: true)
+        let parsed = StatusParser.parse(result.stdout)
+        let state = RepositoryState.detect(gitDirectory: try await resolvedGitDirectory())
+        return RepositoryStatus(head: parsed.head, entries: parsed.entries, state: state)
+    }
+
+    public func branches() async throws -> [Branch] {
+        BranchParser.parse(try await run(BranchParser.arguments, readOnly: true).stdout)
+    }
+
+    /// Newest first. `grep` and `author` match literally, case-insensitively.
+    /// A branch with no commit yet has no history rather than an error.
+    public func log(revision: String = "HEAD", path: String? = nil, grep: String? = nil, author: String? = nil,
+                    limit: Int = 200, skip: Int = 0) async throws -> [Commit] {
+        try Self.requireArgument(revision)
+        var arguments = ["log", "-z", LogParser.format, "--max-count=\(limit)", "--skip=\(skip)"]
+        if grep != nil || author != nil { arguments += ["--fixed-strings", "--regexp-ignore-case"] }
+        if let grep { arguments.append("--grep=\(grep)") }
+        if let author { arguments.append("--author=\(author)") }
+        arguments.append(revision)
+        if let path { arguments = [Self.literal] + arguments + ["--", path] }
+        do {
+            return LogParser.parse(try await run(arguments, readOnly: true).stdout)
+        } catch let error as GitCommandError where revision == "HEAD" {
+            if try await hasHead() { throw error }
+            return []
+        }
+    }
+
+    /// Files a commit changed; a merge is compared with its first parent.
+    public func commitFiles(_ oid: String) async throws -> [CommitFileChange] {
+        try Self.requireArgument(oid)
+        let arguments = ["diff-tree", "--no-commit-id", "--root", "-r", "-M", "-z", "--name-status", Self.firstParent, oid]
+        return NameStatusParser.parse(try await run(arguments, readOnly: true).stdout)
+    }
+
+    /// nil when there is nothing to show (the change was undone meanwhile).
+    /// A rename needs both paths, or git shows it as an added file.
+    public func diff(path: String, originalPath: String? = nil, area: DiffArea) async throws -> DiffFile? {
+        let paths = [originalPath, path].compactMap { $0 }
+        let arguments: [String]
+        var allowed: Set<Int32> = [0]
+        switch area {
+        case .unstaged:
+            arguments = [Self.literal, "diff"] + Self.diffOptions + ["--"] + paths
+        case .staged:
+            arguments = [Self.literal, "diff", "--cached"] + Self.diffOptions + ["--"] + paths
+        case .untracked:
+            // Exit code 1 means "there are differences" here, the normal case.
+            arguments = ["diff", "--no-index"] + Self.diffOptions + ["--", "/dev/null", path]
+            allowed = [0, 1]
+        case .commit(let oid):
+            try Self.requireArgument(oid)
+            arguments = [Self.literal, "show", "--format=", Self.firstParent] + Self.diffOptions + [oid, "--"] + paths
+        }
+        let result = try await run(arguments, readOnly: true, allowedExitCodes: allowed)
+        return DiffParser.parse(result.stdoutText).first
+    }
+
+    public func stashes() async throws -> [Stash] {
+        StashParser.parse(try await run(StashParser.arguments, readOnly: true).stdout)
+    }
+
+    /// nil when the repository has no remote of that name.
+    public func remoteURL(_ name: String = "origin") async throws -> RemoteURL? {
+        try Self.requireArgument(name)
+        let result = try await run(["remote", "get-url", name], readOnly: true, allowedExitCodes: [0, 2])
+        let url = result.stdoutText.trimmingCharacters(in: .whitespacesAndNewlines)
+        return result.succeeded && !url.isEmpty ? RemoteURL(raw: url) : nil
+    }
+
+    // MARK: - Writes
+
+    public func stage(_ paths: [String]) async throws -> OperationOutput {
+        try await write([Self.literal, "add", "-A", "--"] + paths)
+    }
+
+    /// Before the first commit there is no HEAD to restore the index from,
+    /// so the paths are removed from the index instead.
+    public func unstage(_ paths: [String]) async throws -> OperationOutput {
+        let command = try await hasHead() ? ["restore", "--staged", "--"] : ["rm", "--cached", "-r", "-q", "--"]
+        return try await write([Self.literal] + command + paths)
+    }
+
+    public func unstageAll() async throws -> OperationOutput {
+        try await write(["reset", "-q"])
+    }
+
+    public func applyPatch(_ patch: String, mode: PatchMode) async throws -> OperationOutput {
+        let options: [String] = switch mode {
+        case .stage: ["--cached"]
+        case .unstage: ["--cached", "--reverse"]
+        case .discard: ["--reverse"]
+        }
+        return try await write(["apply"] + options + ["--whitespace=nowarn", "-"], stdin: Data(patch.utf8))
+    }
+
+    /// Tracked files only: untracked and newly added files go to the Trash
+    /// from the app instead (plan D15), never through git.
+    /// - Parameter includingStaged: also throw away what is staged.
+    public func discard(_ paths: [String], includingStaged: Bool) async throws -> OperationOutput {
+        let options = includingStaged ? ["--source=HEAD", "--staged", "--worktree"] : ["--worktree"]
+        return try await write([Self.literal, "restore"] + options + ["--"] + paths)
+    }
+
+    /// The message goes through stdin; `--cleanup=whitespace` keeps the
+    /// leading spaces of the git-rule format and lines starting with "#"
+    /// (plan D9). Hooks run.
+    public func commit(_ message: String, amend: Bool = false) async throws -> OperationOutput {
+        try await write(["commit", "-F", "-", "--cleanup=whitespace"] + (amend ? ["--amend"] : []), stdin: Data(message.utf8))
+    }
+
+    public func fetch() async throws -> OperationOutput {
+        try await write(["fetch", "--prune"], timeout: Self.networkTimeout)
+    }
+
+    /// Never creates a merge commit on the user's behalf (plan D13).
+    public func pull(mode: PullMode) async throws -> OperationOutput {
+        try await write(["pull", mode == .rebase ? "--rebase" : "--ff-only"], timeout: Self.networkTimeout)
+    }
+
+    /// No force option exists (plan D14). `setUpstream` is the branch to
+    /// publish when it has no upstream yet.
+    public func push(setUpstream branch: String? = nil) async throws -> OperationOutput {
+        if let branch {
+            try Self.requireArgument(branch)
+            return try await write(["push", "--porcelain", "-u", "origin", branch], timeout: Self.networkTimeout)
+        }
+        return try await write(["push", "--porcelain", "origin", "HEAD"], timeout: Self.networkTimeout)
+    }
+
+    public func switchBranch(_ name: String) async throws -> OperationOutput {
+        try Self.requireArgument(name)
+        return try await write(["switch", name])
+    }
+
+    public func createBranch(_ name: String) async throws -> OperationOutput {
+        try Self.requireArgument(name)
+        return try await write(["switch", "-c", name])
+    }
+
+    /// `-d` only: git refuses to delete a branch whose commits exist nowhere else.
+    public func deleteBranch(_ name: String) async throws -> OperationOutput {
+        try Self.requireArgument(name)
+        return try await write(["branch", "-d", name])
+    }
+
+    /// Untracked files are stashed too.
+    public func stashPush(message: String) async throws -> OperationOutput {
+        try await write(["stash", "push", "--include-untracked", "--message=\(message)"])
+    }
+
+    public func stashPop(_ stash: Stash) async throws -> OperationOutput {
+        try await write(["stash", "pop", stash.ref])
+    }
+
+    public func stashDrop(_ stash: Stash) async throws -> OperationOutput {
+        try await write(["stash", "drop", stash.ref])
+    }
+
+    /// Throws away the merge, rebase, cherry-pick, revert or bisect in progress.
+    public func abortInProgress() async throws -> OperationOutput {
+        let state = RepositoryState.detect(gitDirectory: try await resolvedGitDirectory())
+        guard let arguments = state.abortArguments else { return OperationOutput(stdout: "", stderr: "") }
+        return try await write(arguments)
+    }
+
+    // MARK: - Running
+
+    @discardableResult
+    private func run(_ arguments: [String], stdin: Data? = nil, readOnly: Bool, timeout: Duration = localTimeout,
+                     allowedExitCodes: Set<Int32> = [0]) async throws -> GitResult {
+        let result = try await git.run(arguments, in: root, stdin: stdin, readOnly: readOnly, timeout: timeout)
+        guard allowedExitCodes.contains(result.exitCode) else { throw GitCommandError(arguments: arguments, result: result) }
+        return result
+    }
+
+    /// Queued behind every write asked for before it. The queue is set up
+    /// before the first `await`, so call order is run order.
+    private func write(_ arguments: [String], stdin: Data? = nil, timeout: Duration = localTimeout) async throws -> OperationOutput {
+        let previous = writeQueue
+        let operation = Task {
+            await previous?.value
+            return try await self.run(arguments, stdin: stdin, readOnly: false, timeout: timeout)
+        }
+        writeQueue = Task { _ = try? await operation.value }
+        let result = try await operation.value
+        return OperationOutput(stdout: result.stdoutText, stderr: result.stderr)
+    }
+
+    private func hasHead() async throws -> Bool {
+        try await run(["rev-parse", "--verify", "--quiet", "HEAD"], readOnly: true, allowedExitCodes: [0, 1]).succeeded
+    }
+
+    private func resolvedGitDirectory() async throws -> URL {
+        if let gitDirectory { return gitDirectory }
+        let path = try await run(["rev-parse", "--absolute-git-dir"], readOnly: true).stdoutText
+            .trimmingCharacters(in: .newlines)
+        let url = URL(fileURLWithPath: path, isDirectory: true)
+        gitDirectory = url
+        return url
+    }
+
+    /// A branch, revision or remote name starting with "-" would be read as
+    /// an option. git refuses such names anyway; this makes sure it never
+    /// gets the chance to interpret one.
+    static func requireArgument(_ value: String) throws {
+        guard !value.isEmpty, !value.hasPrefix("-") else { throw GitRepositoryError.invalidArgument(value) }
+    }
+}
+
+public enum GitRepositoryError: Error, Equatable, Sendable {
+    case invalidArgument(String)
+}
