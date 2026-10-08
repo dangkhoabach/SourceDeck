@@ -450,12 +450,52 @@
         }
       }
     },
+    "Check for updates automatically" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tự động kiểm tra cập nhật"
+          }
+        }
+      }
+    },
+    "Check for Updates…" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kiểm tra cập nhật…"
+          }
+        }
+      }
+    },
+    "Check Now" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kiểm tra ngay"
+          }
+        }
+      }
+    },
     "Checked on the staged changes at every commit. A finding stops the commit until the files are unstaged or you commit anyway." : {
       "localizations" : {
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kiểm tra trên các thay đổi đã stage ở mỗi lần commit. Khi phát hiện, commit dừng lại cho tới khi bạn unstage các file đó hoặc vẫn chọn commit."
+          }
+        }
+      }
+    },
+    "Checks updates.dangkhoabach.vn once a day. Turning this off means updates only happen when you ask for them." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kiểm tra updates.dangkhoabach.vn mỗi ngày một lần. Tắt đi thì chỉ cập nhật khi bạn tự yêu cầu."
           }
         }
       }
@@ -3248,6 +3288,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cập nhật tính năng đã có"
+          }
+        }
+      }
+    },
+    "Updates" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cập nhật"
           }
         }
       }

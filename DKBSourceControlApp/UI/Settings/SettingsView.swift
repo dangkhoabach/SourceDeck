@@ -10,6 +10,9 @@ struct SettingsView: View {
     @AppStorage(AppSettings.autoFetchMinutesKey) private var autoFetchMinutes = 0
     @AppStorage(AppSettings.gitPathKey) private var gitPath = ""
     @State private var gitCheck: GitCheck?
+    /// Mirrors Sparkle's own preference for display only: the write goes
+    /// straight back to Sparkle, and `onAppear` re-reads it.
+    @State private var automaticUpdateChecks = AppUpdater.automaticallyChecksForUpdates
     private let services = AppServices.shared
 
     /// What `--version` said about the path typed in.
@@ -97,6 +100,23 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
             }
 
+            Section("Updates") {
+                Toggle("Check for updates automatically", isOn: Binding(
+                    get: { automaticUpdateChecks },
+                    set: {
+                        automaticUpdateChecks = $0
+                        AppUpdater.automaticallyChecksForUpdates = $0
+                    }
+                ))
+                Text("Checks updates.dangkhoabach.vn once a day. Turning this off means updates only happen when you ask for them.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                HStack {
+                    Spacer()
+                    Button("Check Now") { AppUpdater.checkForUpdates() }
+                }
+            }
+
             Section("Sensitive files and secrets") {
                 ForEach(SensitiveRule.allCases, id: \.self) { rule in
                     LabeledContent {
@@ -112,6 +132,8 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .frame(width: 480, height: 640)
+        // Sparkle's own prompt can answer this after the view was built.
+        .onAppear { automaticUpdateChecks = AppUpdater.automaticallyChecksForUpdates }
         .onChange(of: themeRaw) { ThemePreference.apply() }
         .onChange(of: gitPath) { gitCheck = nil }
         .onChange(of: autoFetchMinutes) { services.repositories?.scheduleAutoFetch(minutes: autoFetchMinutes) }

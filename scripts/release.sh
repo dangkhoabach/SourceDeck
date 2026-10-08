@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Builds, signs and packages a DKB Source Control release entirely on this
-# Mac (docs/release.md). Same shape as DKB Clamshell's release.sh, without
-# Sparkle: v1 is installed on this Mac only (plan D19).
+# Builds, signs, packages and Sparkle-signs a DKB Source Control release
+# entirely on this Mac (docs/release.md). Same shape as DKB Clamshell's
+# release.sh: local certificate, Hardened Runtime, Sparkle signature.
 #   ./scripts/release.sh           # asks for the version
-#   ./scripts/release.sh 1.0.0
+#   ./scripts/release.sh 1.0.1
 #
 # Signing uses the self-signed "DKB Source Control Local Signing"
 # certificate named in Local.xcconfig (scripts/create-signing-cert.sh): a
@@ -18,6 +18,14 @@ SCHEME="DKBSourceControlApp"
 PROJECT="DKBSourceControlNative.xcodeproj"
 APP_NAME="DKB Source Control"
 INFO_PLIST="DKBSourceControlApp/Info.plist"
+# Required: without --account, sign_update silently signs with DKB Monitor's
+# default-account key, producing a signature no installed copy accepts.
+SPARKLE_ACCOUNT="dkb-source-control"
+SPARKLE_VERSION="2.6.4"
+# SHA-256 of Sparkle-2.6.4.tar.xz (same pin as the other apps). The tools
+# run with access to the signing key, so they are verified before they run.
+SPARKLE_SHA256="50612a06038abc931f16011d7903b8326a362c1074dabccb718404ce8e585f0b"
+SPARKLE_TOOLS_DIR=".sparkle-tools/$SPARKLE_VERSION"
 
 [ -f Local.xcconfig ] || { echo "Error: Local.xcconfig is missing. Run scripts/create-signing-cert.sh first." >&2; exit 1; }
 IDENTITY=$(sed -nE 's/^CODE_SIGN_IDENTITY *= *(.*)$/\1/p' Local.xcconfig | tail -1)
@@ -26,6 +34,30 @@ IDENTITY=$(sed -nE 's/^CODE_SIGN_IDENTITY *= *(.*)$/\1/p' Local.xcconfig | tail 
   exit 1
 }
 command -v create-dmg >/dev/null || { echo "Error: create-dmg not found. Run: brew install create-dmg" >&2; exit 1; }
+
+# Cached per version, verified before anything is extracted (DKB Monitor).
+if [ ! -x "$SPARKLE_TOOLS_DIR/bin/sign_update" ]; then
+  mkdir -p "$SPARKLE_TOOLS_DIR"
+  curl -fsSL -o "$SPARKLE_TOOLS_DIR/sparkle.tar.xz" \
+    "https://github.com/sparkle-project/Sparkle/releases/download/${SPARKLE_VERSION}/Sparkle-${SPARKLE_VERSION}.tar.xz"
+  echo "$SPARKLE_SHA256  $SPARKLE_TOOLS_DIR/sparkle.tar.xz" | shasum -a 256 -c - || {
+    echo "Error: Sparkle ${SPARKLE_VERSION} failed checksum verification. Refusing to run its tools." >&2
+    rm -f "$SPARKLE_TOOLS_DIR/sparkle.tar.xz"
+    exit 1
+  }
+  tar -xf "$SPARKLE_TOOLS_DIR/sparkle.tar.xz" -C "$SPARKLE_TOOLS_DIR"
+fi
+# Before anything is built: a DMG signed with a key other than the one in
+# Info.plist is rejected by every installed copy, with an error that points
+# nowhere near the cause.
+PUBLIC_KEY=$("$SPARKLE_TOOLS_DIR/bin/generate_keys" --account "$SPARKLE_ACCOUNT" -p) || {
+  echo "Error: no Sparkle key under the \"$SPARKLE_ACCOUNT\" Keychain account. See docs/release.md, One-time setup." >&2
+  exit 1
+}
+[ "$PUBLIC_KEY" = "$(/usr/libexec/PlistBuddy -c 'Print :SUPublicEDKey' "$INFO_PLIST" 2>/dev/null)" ] || {
+  echo "Error: SUPublicEDKey in $INFO_PLIST is not the public half of the \"$SPARKLE_ACCOUNT\" key ($PUBLIC_KEY)." >&2
+  exit 1
+}
 
 # Info.plist is the source of truth for the version; both fields get the
 # same MAJOR.MINOR.PATCH.
@@ -107,11 +139,14 @@ for arch in arm64 x86_64; do
     exit 1
   }
 done
-# No entitlements at all (plan D1): no sandbox, nothing to relax, and in
-# particular no get-task-allow, which Xcode injects into Debug builds.
-ENTITLEMENTS=$(codesign -d --entitlements :- "$APP_PATH" 2>/dev/null | grep -oE '<key>[^<]+</key>' | tr -d '\n' || true)
-[ -z "$ENTITLEMENTS" ] || { echo "Error: unexpected entitlements: $ENTITLEMENTS" >&2; exit 1; }
-echo "    signature OK, hardened runtime OK, no entitlements, version $VERSION_BUILT, architectures: $ARCHS_BUILT"
+# Exactly one entitlement (plan D1): library validation off, so Hardened
+# Runtime loads Sparkle.framework, which a self-signed certificate (no Team
+# ID) can't make pass that check. No sandbox, and in particular no
+# get-task-allow, which Xcode injects into Debug builds.
+ENTITLEMENTS=$(codesign -d --entitlements :- "$APP_PATH" 2>/dev/null | grep -oE '<key>[^<]+</key>' | sort | tr -d '\n' || true)
+EXPECTED='<key>com.apple.security.cs.disable-library-validation</key>'
+[ "$ENTITLEMENTS" = "$EXPECTED" ] || { echo "Error: unexpected entitlements: $ENTITLEMENTS" >&2; exit 1; }
+echo "    signature OK, hardened runtime OK, entitlements OK, version $VERSION_BUILT, architectures: $ARCHS_BUILT"
 
 echo "==> Creating DMG"
 DMG_PATH="$OUT_DIR/DKB-Source-Control-$VERSION.dmg"
@@ -128,10 +163,17 @@ create-dmg \
   "$APP_PATH"
 (cd "$OUT_DIR" && shasum -a 256 "$(basename "$DMG_PATH")" > "$(basename "$DMG_PATH").sha256")
 
+echo "==> Signing update with Sparkle"
+# -p prints only the raw EdDSA signature — exactly what the admin panel's
+# "Sparkle signature" field expects.
+"$SPARKLE_TOOLS_DIR/bin/sign_update" -p --account "$SPARKLE_ACCOUNT" "$DMG_PATH" | tee "$DMG_PATH.sig"
+[ -s "$DMG_PATH.sig" ] || { echo "Error: sign_update produced an empty signature." >&2; exit 1; }
+
 rm -rf "$OUT_DIR/$APP_NAME.app"
 cp -R "$APP_PATH" "$OUT_DIR/"
 echo ""
 echo "==> Done: $OUT_DIR"
 echo "    Installer: $DMG_PATH"
 echo "    SHA-256:   $(cut -d' ' -f1 "$DMG_PATH.sha256")"
+echo "    Sparkle signature: $DMG_PATH.sig"
 echo "Install here with: ./scripts/install-local.sh $VERSION"

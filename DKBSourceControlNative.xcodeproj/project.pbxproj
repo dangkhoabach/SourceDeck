@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		1ADE59772C8453018CCB17D3 /* DKBSourceControlCore in Frameworks */ = {isa = PBXBuildFile; productRef = C5CC705E8E6148410A6B1D0F /* DKBSourceControlCore */; };
+		BEFBDD507A21BDF0B8A8B0DE /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = B458CE8605238D78E1C79FA2 /* Sparkle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -66,6 +67,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1ADE59772C8453018CCB17D3 /* DKBSourceControlCore in Frameworks */,
+				BEFBDD507A21BDF0B8A8B0DE /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -113,6 +115,7 @@
 			name = DKBSourceControlApp;
 			packageProductDependencies = (
 				C5CC705E8E6148410A6B1D0F /* DKBSourceControlCore */,
+				B458CE8605238D78E1C79FA2 /* Sparkle */,
 			);
 			productName = DKBSourceControlApp;
 			productReference = 442A741A8F1973B0E3063D6E /* DKB Source Control.app */;
@@ -171,6 +174,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				1D165971D6306B320454485B /* XCLocalSwiftPackageReference "DKBSourceControlCore" */,
+				EA125B2A9BE8DB19408252A7 /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = DF56FFA7C938A947ECF4D802 /* Products */;
@@ -223,6 +227,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = DKBSourceControlApp/DKBSourceControlApp.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				DISABLE_MANUAL_TARGET_ORDER_BUILD_WARNING = YES;
 				INFOPLIST_FILE = DKBSourceControlApp/Info.plist;
@@ -338,6 +343,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = DKBSourceControlApp/DKBSourceControlApp.entitlements;
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				COMBINE_HIDPI_IMAGES = YES;
 				DISABLE_MANUAL_TARGET_ORDER_BUILD_WARNING = YES;
@@ -463,7 +469,23 @@
 		};
 /* End XCLocalSwiftPackageReference section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		EA125B2A9BE8DB19408252A7 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = exactVersion;
+				version = 2.10.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
+		B458CE8605238D78E1C79FA2 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EA125B2A9BE8DB19408252A7 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
 		C5CC705E8E6148410A6B1D0F /* DKBSourceControlCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = DKBSourceControlCore;

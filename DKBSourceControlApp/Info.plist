@@ -28,5 +28,11 @@
 	<string>DKB Source Control runs git in the repositories you add. This one is inside your Documents folder.</string>
 	<key>NSDownloadsFolderUsageDescription</key>
 	<string>DKB Source Control runs git in the repositories you add. This one is inside your Downloads folder.</string>
+	<key>SUFeedURL</key>
+	<string>https://updates.dangkhoabach.vn/dkb-source-control/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>YhgFzyzDFN6ZhjsyWIB3gnVhRBlbxZEvKhALp8fwPLw=</string>
+	<key>SUScheduledCheckInterval</key>
+	<integer>86400</integer>
 </dict>
 </plist>

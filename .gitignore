@@ -8,6 +8,9 @@ Local.xcconfig
 # Local build output — reproducible
 release-output/
 
+# Sparkle's signing tools, downloaded and checksum-verified by release.sh
+.sparkle-tools/
+
 # Xcode / Swift Package Manager. Tracked inside the .xcodeproj: project.pbxproj,
 # the shared scheme (serial build order) and the workspace's Package.resolved.
 build/

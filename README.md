@@ -134,6 +134,8 @@ for the list of added repositories and the commit drafts.
 
 ## Releasing
 
-`./scripts/release.sh <version>` tests, builds a signed universal app and a
-DMG into `release-output/`; `./scripts/install-local.sh` installs it into
-`/Applications`. See [`docs/release.md`](docs/release.md).
+`./scripts/release.sh <version>` tests, builds a signed universal app, a DMG
+and its Sparkle signature into `release-output/`; the DMG is published
+through admin.dangkhoabach.vn, and the installed app finds it with Check for
+Updates… (once a day if allowed). `./scripts/install-local.sh` installs a
+build into `/Applications`. See [`docs/release.md`](docs/release.md).

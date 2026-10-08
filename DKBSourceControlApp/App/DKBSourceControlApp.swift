@@ -21,6 +21,10 @@ struct DKBSourceControlApp: App {
         }
         .defaultSize(width: 1440, height: 900)
         .commands {
+            // Sparkle's usual place, under About, as in the other DKB apps.
+            CommandGroup(after: .appInfo) {
+                Button("Check for Updates…") { AppUpdater.checkForUpdates() }
+            }
             // One main window (plan D4): every repository is a sidebar entry
             // of it, so File › New Window would only open a duplicate.
             CommandGroup(replacing: .newItem) {
