@@ -3062,16 +3062,6 @@
         }
       }
     },
-    "Uncommitted changes" : {
-      "localizations" : {
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Có thay đổi chưa commit"
-          }
-        }
-      }
-    },
     "Unstage" : {
       "localizations" : {
         "vi" : {

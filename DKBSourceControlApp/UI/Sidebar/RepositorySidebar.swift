@@ -90,10 +90,48 @@ private struct RepositoryRow: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 if !status.isClean {
-                    Circle().fill(status.hasConflicts ? .red : .orange).frame(width: 7, height: 7)
-                        .help("Uncommitted changes")
+                    ChangeCountBadge(status: status)
                 }
             }
         }
+    }
+}
+
+/// How many files have uncommitted changes, each counted once (a partly
+/// staged file is one). Red with a conflict, green when everything is
+/// staged and ready to commit, orange otherwise; the tooltip splits the
+/// count the way the Dashboard does. Solid, so it stays readable on the
+/// selected row.
+private struct ChangeCountBadge: View {
+    let status: RepositoryStatus
+
+    var body: some View {
+        let count = status.entries.count
+        Text(verbatim: count > 999 ? "999+" : String(count))
+            .font(.caption2.weight(.semibold))
+            .monospacedDigit()
+            .foregroundStyle(.white)
+            .padding(.horizontal, 5)
+            .frame(minWidth: 18, minHeight: 15)
+            .background(color, in: Capsule())
+            // A narrow sidebar shortens the name, never the count.
+            .fixedSize()
+            .help(summary)
+            .accessibilityLabel(summary)
+    }
+
+    private var color: Color {
+        if status.hasConflicts { return .red }
+        return status.unstagedCount == 0 && status.untrackedCount == 0 ? .green : .orange
+    }
+
+    private var summary: String {
+        let conflicts = status.entries.count(where: \.isConflict)
+        var parts: [String] = []
+        if conflicts > 0 { parts.append(String(localized: "\(conflicts) conflicted", bundle: AppLocale.bundle)) }
+        if status.stagedCount > 0 { parts.append(String(localized: "\(status.stagedCount) staged", bundle: AppLocale.bundle)) }
+        if status.unstagedCount > 0 { parts.append(String(localized: "\(status.unstagedCount) changed", bundle: AppLocale.bundle)) }
+        if status.untrackedCount > 0 { parts.append(String(localized: "\(status.untrackedCount) new", bundle: AppLocale.bundle)) }
+        return parts.joined(separator: ", ")
     }
 }
