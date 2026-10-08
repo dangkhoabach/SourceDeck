@@ -74,7 +74,7 @@ public enum RepositoryState: Sendable, Equatable {
     }
 
     /// The command that throws the operation away, back to where it started.
-    var abortArguments: [String]? {
+    public var abortArguments: [String]? {
         switch self {
         case .normal: nil
         case .merging: ["merge", "--abort"]

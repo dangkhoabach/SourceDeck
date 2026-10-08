@@ -38,7 +38,7 @@ private struct MainWindowView: View {
         }
         .inspector(isPresented: $showsLog) {
             OperationLogView(log: list.log)
-                .inspectorColumnWidth(min: 280, ideal: 360, max: 560)
+                .inspectorColumnWidth(min: 260, ideal: 340, max: 560)
         }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -48,7 +48,7 @@ private struct MainWindowView: View {
                     Label("Log", systemImage: "list.bullet.rectangle")
                 }
                 .keyboardShortcut("l", modifiers: [.command, .option])
-                .help("Show or hide the git output of fetch, pull and push (⌥⌘L)")
+                .help("Show or hide the git output of fetch, pull, push and commit (⌥⌘L)")
             }
         }
         .sheet(isPresented: $list.isScanSheetPresented) {

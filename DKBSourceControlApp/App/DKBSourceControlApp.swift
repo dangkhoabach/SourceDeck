@@ -14,6 +14,7 @@ struct DKBSourceControlApp: App {
             ContentView()
                 .environment(\.locale, appLocale.locale)
         }
+        .defaultSize(width: 1440, height: 900)
         .commands {
             // One main window (plan D4): every repository is a sidebar entry
             // of it, so File › New Window would only open a duplicate.

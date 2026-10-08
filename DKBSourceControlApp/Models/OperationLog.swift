@@ -2,8 +2,9 @@ import DKBSourceControlCore
 import Foundation
 import Observation
 
-/// Every fetch, pull and push with git's own output (plan §7.3: the
-/// verbatim text, never just "an error occurred"). Shown in the inspector.
+/// Every fetch, pull, push, commit and discard, and every write that
+/// failed, with git's own output (plan §7.3: the verbatim text, never just
+/// "an error occurred"). Shown in the inspector.
 @MainActor
 @Observable
 final class OperationLog {
@@ -70,6 +71,7 @@ enum GitErrorText {
             case .notARepository: "This folder is not a git repository any more."
             case .other: "git reported an error."
             }
+        case is TrashService.Failure: "A file couldn't be moved to the Trash, so the discard stopped there."
         case GitError.timedOut: "git didn't finish in time and was stopped."
         case GitError.launchFailed: "git couldn't be started."
         default: "Something went wrong."
@@ -81,6 +83,7 @@ enum GitErrorText {
         switch error {
         case let error as GitCommandError: error.output
         case GitError.launchFailed(let path, let reason): "\(path): \(reason)"
+        case let error as TrashService.Failure: "\(error.path): \(error.underlying.localizedDescription)"
         default: error.localizedDescription
         }
     }

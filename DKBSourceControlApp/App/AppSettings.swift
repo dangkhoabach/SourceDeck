@@ -7,6 +7,8 @@ enum AppSettings {
     static let pullModeKey = "pullMode"
     static let autoFetchMinutesKey = "autoFetchMinutes"
     static let lastSelectedRepositoryKey = "lastSelectedRepositoryId"
+    static let diffContextKey = "diffContext"
+    static let diffIgnoresWhitespaceKey = "diffIgnoresWhitespace"
 
     /// Fast-forward only unless the user chose rebase (plan D13).
     static var pullMode: PullMode {
@@ -19,4 +21,12 @@ enum AppSettings {
     }
 
     static let autoFetchChoices = [0, 5, 15, 30, 60]
+
+    /// The diff viewer's last choice: 3 lines of context and whitespace
+    /// shown until changed (plan F3).
+    static var diffOptions: DiffOptions {
+        let context = UserDefaults.standard.integer(forKey: diffContextKey)
+        return DiffOptions(context: context > 0 ? context : 3,
+                           ignoresWhitespace: UserDefaults.standard.bool(forKey: diffIgnoresWhitespaceKey))
+    }
 }

@@ -85,8 +85,7 @@ public enum SensitiveChangeScanner {
     public static func scan(stagedPaths: [String], stagedDiffs: [DiffFile]) -> [SensitiveFinding] {
         var findings: [SensitiveFinding] = []
         for path in stagedPaths {
-            let name = (path as NSString).lastPathComponent
-            if let rule = SensitiveRule.allCases.first(where: { !$0.isContentRule && $0.matches(fileName: name) }) {
+            if let rule = pathRule(for: path) {
                 findings.append(SensitiveFinding(path: path, rule: rule, line: nil, maskedMatch: nil))
             }
         }
@@ -105,6 +104,13 @@ public enum SensitiveChangeScanner {
             }
         }
         return findings
+    }
+
+    /// The file-name rule `path` breaks, if any; the file list marks such
+    /// files before they are even staged.
+    public static func pathRule(for path: String) -> SensitiveRule? {
+        let name = (path as NSString).lastPathComponent
+        return SensitiveRule.allCases.first { !$0.isContentRule && $0.matches(fileName: name) }
     }
 
     static func mask(_ value: String) -> String {

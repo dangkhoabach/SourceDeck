@@ -27,6 +27,7 @@ final class RepositoryList {
     let log = OperationLog()
 
     @ObservationIgnored let store: RepositoryStore
+    @ObservationIgnored let drafts: CommitDraftStore
     @ObservationIgnored let git: GitProcess
     @ObservationIgnored private var autoFetchTask: Task<Void, Never>?
 
@@ -36,6 +37,7 @@ final class RepositoryList {
 
     init(database: AppDatabase, git: GitProcess) {
         store = RepositoryStore(dbQueue: database.dbQueue)
+        drafts = CommitDraftStore(dbQueue: database.dbQueue)
         self.git = git
         if let id = UserDefaults.standard.string(forKey: AppSettings.lastSelectedRepositoryKey) {
             selection = .repository(id)
@@ -74,7 +76,7 @@ final class RepositoryList {
                 model.update(record)
                 return model
             }
-            let model = RepositoryModel(record: record, git: git, log: log)
+            let model = RepositoryModel(record: record, git: git, log: log, drafts: drafts)
             Task { await model.refresh() }
             return model
         }
@@ -127,6 +129,10 @@ final class RepositoryList {
     }
 
     // MARK: - Every repository at once
+
+    func saveDrafts() {
+        models.forEach { $0.saveDraft() }
+    }
 
     func refreshAll() async {
         await forEachModel { await $0.refresh() }

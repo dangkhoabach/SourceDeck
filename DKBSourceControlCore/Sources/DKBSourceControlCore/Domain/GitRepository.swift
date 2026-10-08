@@ -3,6 +3,11 @@ import Foundation
 public struct OperationOutput: Sendable, Equatable {
     public let stdout: String
     public let stderr: String
+
+    public init(stdout: String = "", stderr: String = "") {
+        self.stdout = stdout
+        self.stderr = stderr
+    }
 }
 
 public enum DiffArea: Sendable, Equatable {
@@ -14,6 +19,27 @@ public enum DiffArea: Sendable, Equatable {
     case untracked
     /// What a commit changed against its first parent.
     case commit(String)
+}
+
+/// How a diff is shown (plan F3). Only the default makes patches for
+/// `git apply`: with whitespace ignored, the lines shown aren't the lines
+/// in the file.
+public struct DiffOptions: Sendable, Equatable {
+    /// Lines of context around each change.
+    public var context: Int
+    public var ignoresWhitespace: Bool
+
+    public init(context: Int = 3, ignoresWhitespace: Bool = false) {
+        self.context = context
+        self.ignoresWhitespace = ignoresWhitespace
+    }
+
+    /// As much context as git takes: the whole file in one hunk.
+    public static let wholeFile = Int(Int32.max)
+
+    var arguments: [String] {
+        ["-U\(context)"] + (ignoresWhitespace ? ["--ignore-all-space"] : [])
+    }
 }
 
 public enum PatchMode: Sendable {
@@ -40,7 +66,8 @@ public actor GitRepository {
     static let networkTimeout = Duration.seconds(120)
     /// Fixed so the user's diff config can't change what the parser and
     /// `git apply` see: prefixes, colour, external tools, text conversion.
-    static let diffOptions = ["--no-color", "--no-ext-diff", "--no-textconv", "-M", "-U3", "--src-prefix=a/", "--dst-prefix=b/"]
+    /// Context and whitespace come from `DiffOptions`.
+    static let diffOptions = ["--no-color", "--no-ext-diff", "--no-textconv", "-M", "--src-prefix=a/", "--dst-prefix=b/"]
     /// Paths from the file list are file names, never patterns: a file
     /// called "*.txt" or ":(exclude)x" must mean only itself. Given per
     /// command, not as `GIT_LITERAL_PATHSPECS` for every one: `stash push -u`
@@ -69,7 +96,7 @@ public actor GitRepository {
     public func status() async throws -> RepositoryStatus {
         let result = try await run(StatusParser.arguments, readOnly: true)
         let parsed = StatusParser.parse(result.stdout)
-        let state = RepositoryState.detect(gitDirectory: try await resolvedGitDirectory())
+        let state = RepositoryState.detect(gitDirectory: try await gitDirectory())
         return RepositoryStatus(head: parsed.head, entries: parsed.entries, state: state)
     }
 
@@ -105,25 +132,53 @@ public actor GitRepository {
 
     /// nil when there is nothing to show (the change was undone meanwhile).
     /// A rename needs both paths, or git shows it as an added file.
-    public func diff(path: String, originalPath: String? = nil, area: DiffArea) async throws -> DiffFile? {
+    public func diff(path: String, originalPath: String? = nil, area: DiffArea,
+                     options: DiffOptions = DiffOptions()) async throws -> DiffFile? {
         let paths = [originalPath, path].compactMap { $0 }
+        let diffOptions = Self.diffOptions + options.arguments
         let arguments: [String]
         var allowed: Set<Int32> = [0]
         switch area {
         case .unstaged:
-            arguments = [Self.literal, "diff"] + Self.diffOptions + ["--"] + paths
+            arguments = [Self.literal, "diff"] + diffOptions + ["--"] + paths
         case .staged:
-            arguments = [Self.literal, "diff", "--cached"] + Self.diffOptions + ["--"] + paths
+            arguments = [Self.literal, "diff", "--cached"] + diffOptions + ["--"] + paths
         case .untracked:
             // Exit code 1 means "there are differences" here, the normal case.
-            arguments = ["diff", "--no-index"] + Self.diffOptions + ["--", "/dev/null", path]
+            arguments = ["diff", "--no-index"] + diffOptions + ["--", "/dev/null", path]
             allowed = [0, 1]
         case .commit(let oid):
             try Self.requireArgument(oid)
-            arguments = [Self.literal, "show", "--format=", Self.firstParent] + Self.diffOptions + [oid, "--"] + paths
+            arguments = [Self.literal, "show", "--format=", Self.firstParent] + diffOptions + [oid, "--"] + paths
         }
         let result = try await run(arguments, readOnly: true, allowedExitCodes: allowed)
         return DiffParser.parse(result.stdoutText).first
+    }
+
+    /// Every staged change, for the sensitive check before a commit (plan
+    /// F4b). No line limit: a secret in a long file must still be found.
+    public func stagedDiff() async throws -> [DiffFile] {
+        let arguments = ["diff", "--cached"] + Self.diffOptions + DiffOptions().arguments
+        return DiffParser.parse(try await run(arguments, readOnly: true).stdoutText, maxLines: .max)
+    }
+
+    /// Whether a remote-tracking branch already contains HEAD: amending it
+    /// would then rewrite history others may have (plan D9).
+    public func isHeadOnRemote() async throws -> Bool {
+        guard try await hasHead() else { return false }
+        let arguments = ["for-each-ref", "--contains=HEAD", "--count=1", "--format=%(refname)", "refs/remotes"]
+        return !(try await run(arguments, readOnly: true).stdout.isEmpty)
+    }
+
+    /// Folders an ignore rule matches itself (`build/`, `node_modules/`),
+    /// relative to the root and ending in "/", for the watcher (plan D10).
+    /// Not `ls-files --ignored --directory`: it also lists a folder that
+    /// only holds ignored files, though a new file there would be untracked.
+    public func ignoredDirectories() async throws -> [String] {
+        let arguments = ["status", "--porcelain=v2", "-z", "--ignored=matching", "--untracked-files=normal"]
+        return try await run(arguments, readOnly: true).stdout.nullSeparatedFields().compactMap { field in
+            field.hasPrefix("! ") && field.hasSuffix("/") ? String(field.dropFirst(2)) : nil
+        }
     }
 
     public func stashes() async throws -> [Stash] {
@@ -145,7 +200,8 @@ public actor GitRepository {
     }
 
     /// Before the first commit there is no HEAD to restore the index from,
-    /// so the paths are removed from the index instead.
+    /// so the paths are removed from the index instead. A staged rename
+    /// needs both paths, or the old one stays staged as deleted.
     public func unstage(_ paths: [String]) async throws -> OperationOutput {
         let command = try await hasHead() ? ["restore", "--staged", "--"] : ["rm", "--cached", "-r", "-q", "--"]
         return try await write([Self.literal] + command + paths)
@@ -229,7 +285,7 @@ public actor GitRepository {
 
     /// Throws away the merge, rebase, cherry-pick, revert or bisect in progress.
     public func abortInProgress() async throws -> OperationOutput {
-        let state = RepositoryState.detect(gitDirectory: try await resolvedGitDirectory())
+        let state = RepositoryState.detect(gitDirectory: try await gitDirectory())
         guard let arguments = state.abortArguments else { return OperationOutput(stdout: "", stderr: "") }
         return try await write(arguments)
     }
@@ -261,7 +317,8 @@ public actor GitRepository {
         try await run(["rev-parse", "--verify", "--quiet", "HEAD"], readOnly: true, allowedExitCodes: [0, 1]).succeeded
     }
 
-    private func resolvedGitDirectory() async throws -> URL {
+    /// `.git`, or wherever a linked work tree's `.git` file points.
+    public func gitDirectory() async throws -> URL {
         if let gitDirectory { return gitDirectory }
         let path = try await run(["rev-parse", "--absolute-git-dir"], readOnly: true).stdoutText
             .trimmingCharacters(in: .newlines)

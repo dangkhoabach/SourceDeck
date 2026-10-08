@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// git's own output of every fetch, pull and push this session, newest
-/// first, selectable for copying (plan §7.3).
+/// git's own output of every fetch, pull, push, commit and discard this
+/// session, and of every write that failed, newest first, selectable for
+/// copying (plan §7.3).
 struct OperationLogView: View {
     let log: OperationLog
 
@@ -18,7 +19,7 @@ struct OperationLogView: View {
             Divider()
             if log.entries.isEmpty {
                 ContentUnavailableView("No git output yet", systemImage: "list.bullet.rectangle",
-                                       description: Text("Fetch, pull and push show what git said here."))
+                                       description: Text("Fetch, pull, push and commit show what git said here."))
                     .frame(maxHeight: .infinity)
             } else {
                 List(log.entries) { entry in

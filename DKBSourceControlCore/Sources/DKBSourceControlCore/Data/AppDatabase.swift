@@ -3,11 +3,12 @@ import GRDB
 
 /// Opens (or creates) the app's SQLite database and keeps it migrated.
 ///
-/// Holds only what git doesn't: which repositories the user added and in
-/// what order (plan §5.4). Nothing about a repository's contents, history or
-/// credentials is ever stored here. Light preferences (theme, language, git
-/// path) live in `UserDefaults`, where the shared DKB `@AppStorage` helpers
-/// already read them.
+/// Holds only what git doesn't: which repositories the user added, in what
+/// order, and the commit message being written for each (plan §5.4).
+/// Nothing about a repository's contents, history or credentials is ever
+/// stored here. Light preferences (theme, language, git path) live in
+/// `UserDefaults`, where the shared DKB `@AppStorage` helpers already read
+/// them.
 public struct AppDatabase: Sendable {
     public let dbQueue: DatabaseQueue
 
@@ -37,6 +38,19 @@ public struct AppDatabase: Sendable {
                     name TEXT NOT NULL,
                     sort_order INTEGER NOT NULL,
                     added_at TEXT NOT NULL
+                );
+                """)
+        }
+
+        migrator.registerMigration("v2_commit_drafts") { db in
+            try db.execute(sql: """
+                CREATE TABLE commit_drafts (
+                    repository_id TEXT PRIMARY KEY REFERENCES repositories(id) ON DELETE CASCADE,
+                    keyword TEXT NOT NULL,
+                    outline_json TEXT NOT NULL,
+                    raw_text TEXT,
+                    push_after_commit INTEGER NOT NULL DEFAULT 0,
+                    updated_at TEXT NOT NULL
                 );
                 """)
         }

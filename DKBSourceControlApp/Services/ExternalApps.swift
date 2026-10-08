@@ -14,8 +14,11 @@ struct ExternalApp: Identifiable {
     static let candidates = [
         "com.apple.Terminal", "com.googlecode.iterm2",
         "com.microsoft.VSCode", "com.google.antigravity-ide", "com.todesktop.230313mzl4w4u92",
-        "com.torusknot.SourceTreeNotMAS", "com.DanPristupov.Fork",
+        sourcetree, "com.DanPristupov.Fork",
     ]
+
+    /// Where conflicts get resolved: this app has no conflict editor (plan D17).
+    static let sourcetree = "com.torusknot.SourceTreeNotMAS"
 
     /// Looked up once: apps are rarely installed while this one runs.
     @MainActor static let installed: [ExternalApp] = candidates.compactMap { bundleID in

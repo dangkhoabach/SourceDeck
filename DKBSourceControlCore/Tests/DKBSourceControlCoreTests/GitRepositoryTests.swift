@@ -95,6 +95,50 @@ import Testing
         #expect(shown.hunks[0].lines.contains { $0.kind == .added && $0.text == "TWO" })
     }
 
+    @Test func diffContextAndWhitespaceOptions() async throws {
+        let repo = try await TempRepository()
+        try repo.write("n.txt", (1...40).map { "line \($0)\n" }.joined())
+        try await repo.commitAll("init")
+        try repo.write("n.txt", (1...40).map { $0 == 20 ? "changed\n" : $0 == 30 ? "line  30\n" : "line \($0)\n" }.joined())
+
+        let three = try #require(try await repo.repository.diff(path: "n.txt", area: .unstaged))
+        #expect(three.hunks.count == 2 && three.hunks[0].lines.count == 8)
+        let ten = try #require(try await repo.repository.diff(path: "n.txt", area: .unstaged, options: DiffOptions(context: 10)))
+        #expect(ten.hunks.count == 1)
+        let whole = try #require(try await repo.repository.diff(path: "n.txt", area: .unstaged,
+                                                                options: DiffOptions(context: DiffOptions.wholeFile)))
+        #expect(whole.hunks.count == 1 && whole.hunks[0].oldCount == 40)
+        // Only the change to line 20 is left once spacing is ignored.
+        let noSpace = try #require(try await repo.repository.diff(path: "n.txt", area: .unstaged,
+                                                                  options: DiffOptions(ignoresWhitespace: true)))
+        #expect(noSpace.hunks.count == 1 && noSpace.hunks[0].lines.filter { $0.kind == .added }.map(\.text) == ["changed"])
+    }
+
+    /// The sensitive check reads every staged line, even past the viewer's limit.
+    @Test func stagedDiffHasEveryFileUnlimited() async throws {
+        let repo = try await TempRepository()
+        try repo.write("big.txt", (1...25_000).map { "\($0)\n" }.joined())
+        try repo.write("small.txt", "x\n")
+        _ = try await repo.repository.stage(["big.txt", "small.txt"])
+        // Before the first commit too: compared with the empty tree.
+        let diffs = try await repo.repository.stagedDiff()
+        #expect(diffs.map(\.path) == ["big.txt", "small.txt"])
+        #expect(!diffs[0].isTooLarge && diffs[0].hunks[0].lines.count == 25_000)
+    }
+
+    @Test func unstagingARenameNeedsBothPaths() async throws {
+        let repo = try await TempRepository()
+        try repo.write("old name.txt", "a\n")
+        try await repo.commitAll("init")
+        try await repo.run("mv", "old name.txt", "new name.txt")
+        let entry = try #require(try await repo.repository.status().entries.first)
+        #expect(entry.index == .renamed && entry.originalPath == "old name.txt")
+        _ = try await repo.repository.unstage([entry.originalPath, entry.path].compactMap { $0 })
+        let status = try await repo.repository.status()
+        #expect(status.stagedCount == 0)
+        #expect(Set(status.entries.map(\.path)) == ["old name.txt", "new name.txt"])
+    }
+
     @Test func discardKeepsOrDropsTheStagedPart() async throws {
         let repo = try await TempRepository()
         try repo.write("a.txt", "v1\n")
@@ -270,13 +314,17 @@ import Testing
         try await mine.commitAll("one")
 
         // First push publishes the branch and sets its upstream.
+        #expect(try await mine.repository.isHeadOnRemote() == false)
         _ = try await mine.repository.push(setUpstream: "main")
+        #expect(try await mine.repository.isHeadOnRemote())
         var head = try await mine.repository.status().head
         #expect(head.upstream == "origin/main" && head.ahead == 0)
 
         try mine.write("a.txt", "2\n")
         try await mine.commitAll("two")
         #expect(try await mine.repository.status().head.ahead == 1)
+        // A new commit can be amended until it is pushed.
+        #expect(try await mine.repository.isHeadOnRemote() == false)
         _ = try await mine.repository.push()
         #expect(try await mine.repository.status().head.ahead == 0)
 
