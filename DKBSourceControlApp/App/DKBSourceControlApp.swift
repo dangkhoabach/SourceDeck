@@ -9,6 +9,11 @@ struct DKBSourceControlApp: App {
         AppLocale(rawValue: languageRaw) ?? .systemDefault
     }
 
+    /// ⌘1 / ⌘2 / ⌘3 on the repository in the window (plan §7.2).
+    @MainActor private func show(_ tab: RepositoryModel.Tab) {
+        AppServices.shared.repositories?.selectedModel?.tab = tab
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()
@@ -27,6 +32,12 @@ struct DKBSourceControlApp: App {
             CommandGroup(before: .sidebar) {
                 Button("Dashboard") { AppServices.shared.repositories?.selection = .dashboard }
                     .keyboardShortcut("0")
+                Button("Working Copy") { show(.workingCopy) }
+                    .keyboardShortcut("1")
+                Button("History") { show(.history) }
+                    .keyboardShortcut("2")
+                Button("Branches") { show(.branches) }
+                    .keyboardShortcut("3")
                 Divider()
             }
         }

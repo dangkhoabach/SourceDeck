@@ -20,6 +20,19 @@ import Testing
         #expect(commits[0].authorDate == (try Date("2026-10-08T12:54:48Z", strategy: .iso8601)))
     }
 
+    /// `--decorate=full` as recorded from git 2.54.
+    @Test func decorationsByKind() {
+        let refs = ["HEAD -> refs/heads/main", "tag: refs/tags/v1", "refs/heads/feature/x", "refs/remotes/origin/main",
+                    "refs/remotes/origin/HEAD"]
+        let commit = Commit(oid: "a", parents: [], authorName: "", authorEmail: "", authorDate: .now, commitDate: .now, refs: refs,
+                            message: "m")
+        #expect(commit.decorations == [CommitRef(kind: .head, name: "main"), CommitRef(kind: .tag, name: "v1"),
+                                       CommitRef(kind: .local, name: "feature/x"), CommitRef(kind: .remote, name: "origin/main")])
+        let detached = Commit(oid: "a", parents: [], authorName: "", authorEmail: "", authorDate: .now, commitDate: .now,
+                              refs: ["HEAD"], message: "m")
+        #expect(detached.decorations == [CommitRef(kind: .detachedHead, name: "HEAD")])
+    }
+
     @Test func rootCommitHasNoParents() {
         let raw = "abc\u{1f}\u{1f}A\u{1f}a@e\u{1f}2026-01-01T00:00:00Z\u{1f}2026-01-01T00:00:00Z\u{1f}\u{1f}init\n\0"
         #expect(LogParser.parse(Data(raw.utf8)).first?.parents == [])

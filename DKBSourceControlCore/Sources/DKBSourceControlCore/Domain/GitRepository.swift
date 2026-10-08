@@ -109,7 +109,8 @@ public actor GitRepository {
     public func log(revision: String = "HEAD", path: String? = nil, grep: String? = nil, author: String? = nil,
                     limit: Int = 200, skip: Int = 0) async throws -> [Commit] {
         try Self.requireArgument(revision)
-        var arguments = ["log", "-z", LogParser.format, "--max-count=\(limit)", "--skip=\(skip)"]
+        // Full ref names, so a local branch can be told from a remote one.
+        var arguments = ["log", "-z", "--decorate=full", LogParser.format, "--max-count=\(limit)", "--skip=\(skip)"]
         if grep != nil || author != nil { arguments += ["--fixed-strings", "--regexp-ignore-case"] }
         if let grep { arguments.append("--grep=\(grep)") }
         if let author { arguments.append("--author=\(author)") }
@@ -270,9 +271,10 @@ public actor GitRepository {
         return try await write(["branch", "-d", name])
     }
 
-    /// Untracked files are stashed too.
+    /// Untracked files are stashed too. An empty message lets git name it
+    /// ("WIP on main: …").
     public func stashPush(message: String) async throws -> OperationOutput {
-        try await write(["stash", "push", "--include-untracked", "--message=\(message)"])
+        try await write(["stash", "push", "--include-untracked"] + (message.isEmpty ? [] : ["--message=\(message)"]))
     }
 
     public func stashPop(_ stash: Stash) async throws -> OperationOutput {

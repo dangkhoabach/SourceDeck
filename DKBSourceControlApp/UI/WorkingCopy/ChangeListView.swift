@@ -241,7 +241,7 @@ private struct ChangeRow: View {
 }
 
 /// A/M/D/R/T/C, ? for untracked, U for conflicted.
-private struct StatusLetter: View {
+struct StatusLetter: View {
     let change: FileChange
 
     var body: some View {

@@ -45,7 +45,8 @@ import Testing
         #expect(log.count == 1)
         #expect(log[0].message == message)
         #expect(log[0].summary == "+ Fix Bug +")
-        #expect(log[0].refs == ["HEAD -> main"])
+        #expect(log[0].refs == ["HEAD -> refs/heads/main"])
+        #expect(log[0].decorations == [CommitRef(kind: .head, name: "main")])
         #expect(try await repo.repository.commitFiles(log[0].oid).map(\.path) == ["a.txt"])
         #expect(try await repo.repository.status().isClean)
     }
@@ -235,8 +236,9 @@ import Testing
         #expect(stashes[0].message == "On main: -starts with a dash")
         _ = try await repo.repository.stashPop(stashes[0])
         #expect(try repo.read("new.txt") == "new\n")
-        _ = try await repo.repository.stashPush(message: "again")
+        _ = try await repo.repository.stashPush(message: "")
         stashes = try await repo.repository.stashes()
+        #expect(stashes[0].message.hasPrefix("WIP on main: "))
         _ = try await repo.repository.stashDrop(stashes[0])
         #expect(try await repo.repository.stashes().isEmpty)
     }

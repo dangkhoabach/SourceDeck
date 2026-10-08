@@ -81,7 +81,11 @@ final class CommitComposer {
     /// The last commit's message: as an outline when it follows the
     /// format, as raw text otherwise.
     func useHeadMessage() {
-        guard let message = model.lastCommit?.message else { return }
+        if let message = model.lastCommit?.message { use(message) }
+    }
+
+    /// Any commit's message, from History (plan F6).
+    func use(_ message: String) {
         if let parsed = CommitMessage.parse(message) {
             draft = CommitDraft(parsed, pushAfterCommit: draft.pushAfterCommit)
         } else {

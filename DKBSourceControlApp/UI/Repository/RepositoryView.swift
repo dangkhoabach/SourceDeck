@@ -1,9 +1,9 @@
 import DKBSourceControlCore
 import SwiftUI
 
-/// One repository: its working copy, diff and commit message (plan F2–F4),
+/// One repository: its working copy, history or branches (plan F2–F8),
 /// with Fetch, Pull and Push on the toolbar (plan F5). Watches the folder
-/// while it is on screen.
+/// while it is on screen, whichever tab is shown.
 struct RepositoryView: View {
     let model: RepositoryModel
     @Binding var showsLog: Bool
@@ -25,7 +25,11 @@ struct RepositoryView: View {
                     InProgressBanner(model: model, status: status)
                         .padding([.horizontal, .top], 12)
                 }
-                WorkingCopyView(model: model)
+                switch model.tab {
+                case .workingCopy: WorkingCopyView(model: model)
+                case .history: HistoryView(history: model.history)
+                case .branches: BranchesView(branches: model.branches)
+                }
             } else if let error = model.refreshError {
                 GitErrorBanner(error: error).padding(12)
                 Spacer(minLength: 0)
@@ -50,6 +54,16 @@ struct RepositoryView: View {
 
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
+        ToolbarItem(placement: .principal) {
+            Picker("View", selection: Bindable(model).tab) {
+                Text("Working Copy").tag(RepositoryModel.Tab.workingCopy)
+                Text("History").tag(RepositoryModel.Tab.history)
+                Text("Branches").tag(RepositoryModel.Tab.branches)
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .help("Working Copy (⌘1), History (⌘2), Branches (⌘3)")
+        }
         ToolbarItemGroup {
             Button {
                 Task { await model.refresh() }

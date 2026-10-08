@@ -4,11 +4,18 @@ import Foundation
 /// The preferences kept in `UserDefaults` (plan D11). Views bind to the
 /// same keys with `@AppStorage`; models read them here.
 enum AppSettings {
+    static let gitPathKey = "gitPath"
     static let pullModeKey = "pullMode"
     static let autoFetchMinutesKey = "autoFetchMinutes"
     static let lastSelectedRepositoryKey = "lastSelectedRepositoryId"
     static let diffContextKey = "diffContext"
     static let diffIgnoresWhitespaceKey = "diffIgnoresWhitespace"
+
+    /// `/usr/bin/git` unless the user chose another one; read at launch.
+    static var gitPath: String {
+        let path = UserDefaults.standard.string(forKey: gitPathKey)?.trimmingCharacters(in: .whitespaces) ?? ""
+        return path.isEmpty ? GitEnvironment.defaultGitPath : path
+    }
 
     /// Fast-forward only unless the user chose rebase (plan D13).
     static var pullMode: PullMode {

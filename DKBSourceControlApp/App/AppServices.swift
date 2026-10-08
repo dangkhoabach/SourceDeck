@@ -32,7 +32,7 @@ final class AppServices {
     /// Asks the login shell for PATH (~400 ms, PoC 0.4) and checks
     /// `git --version` off the main thread, once per launch.
     func start() async {
-        let environment = await GitEnvironment.resolve()
+        let environment = await GitEnvironment.resolve(gitPath: AppSettings.gitPath)
         let git = GitProcess(environment: environment)
         switch try? await git.version() {
         case let version? where version.isSupported:

@@ -52,6 +52,9 @@ final class WorkingCopyModel {
     /// The row whose diff is shown; the diff view scrolls back to the top
     /// only when this changes, not when the same file is read again.
     private(set) var diffRow: Row?
+    /// Lines picked in the diff on screen: hunk index → line indexes
+    /// (plan D8, line mode). Cleared whenever that diff changes.
+    var selectedLines: [Int: Set<Int>] = [:]
     var discardRequest: DiscardRequest?
 
     static let maxDiffFileSize = 2_000_000
@@ -173,6 +176,25 @@ final class WorkingCopyModel {
         }
     }
 
+    /// Stage, unstage or discard only the picked lines of one hunk.
+    func apply(lines: Set<Int>, hunk index: Int, of file: DiffFile, mode: PatchMode) async {
+        guard !lines.isEmpty else { return }
+        let patch = PatchBuilder.patch(file, hunk: index, lines: lines, reverse: mode != .stage)
+        let command = switch mode {
+        case .stage: "git apply --cached"
+        case .unstage: "git apply --cached --reverse"
+        case .discard: "git apply --reverse"
+        }
+        await model.write("\(command) (\(file.path), \(lines.count) lines)", logsSuccess: mode == .discard) { [repository = model.repository] in
+            try await repository.applyPatch(patch, mode: mode)
+        }
+    }
+
+    func toggleLine(_ line: Int, hunk: Int) {
+        selectedLines[hunk, default: []].formSymmetricDifference([line])
+        if selectedLines[hunk]?.isEmpty == true { selectedLines[hunk] = nil }
+    }
+
     // MARK: - The diff
 
     /// Reads the diff of the selected file. The one on screen stays until
@@ -208,6 +230,10 @@ final class WorkingCopyModel {
     }
 
     private func show(_ content: DiffContent, for row: Row) {
+        // Picked lines only mean something in the diff they were picked in.
+        var sameDiff = false
+        if case .file(let new, _, _) = content, case .file(let old, _, _) = diff { sameDiff = row == diffRow && new == old }
+        if !sameDiff { selectedLines = [:] }
         diffRow = row
         diff = content
     }

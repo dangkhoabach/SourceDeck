@@ -22,7 +22,8 @@ public enum SensitiveRule: String, CaseIterable, Sendable {
     case googleAPIKey
     case passwordAssignment
 
-    var isContentRule: Bool { contentPattern != nil }
+    /// Checks added lines rather than file names.
+    public var isContentRule: Bool { contentPattern != nil }
 
     /// Case-insensitive match on the file name (not the folder).
     func matches(fileName name: String) -> Bool {

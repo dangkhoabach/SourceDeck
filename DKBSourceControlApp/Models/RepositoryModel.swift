@@ -7,6 +7,11 @@ import Observation
 @MainActor
 @Observable
 final class RepositoryModel: Identifiable {
+    /// ⌘1 / ⌘2 / ⌘3 (plan §7.2).
+    enum Tab: Hashable, CaseIterable {
+        case workingCopy, history, branches
+    }
+
     enum RemoteOperation {
         case fetch, pull, push
 
@@ -36,6 +41,7 @@ final class RepositoryModel: Identifiable {
     /// A branch with no upstream, waiting for the user to confirm its first
     /// push (plan D14).
     var pendingPublish: String?
+    var tab: Tab = .workingCopy
     @ObservationIgnored private var remoteLoaded = false
     @ObservationIgnored private var refreshAgain = false
     @ObservationIgnored private var writesInFlight = 0
@@ -47,6 +53,8 @@ final class RepositoryModel: Identifiable {
     /// Kept per repository, so the selection and the half-written message
     /// are still there after looking at another one.
     @ObservationIgnored private(set) lazy var workingCopy = WorkingCopyModel(model: self)
+    @ObservationIgnored private(set) lazy var history = HistoryModel(model: self)
+    @ObservationIgnored private(set) lazy var branches = BranchesModel(model: self)
     @ObservationIgnored private var openedComposer: CommitComposer?
 
     /// Made the first time the repository is shown, reading its draft then.

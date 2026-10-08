@@ -7,7 +7,8 @@ public struct Commit: Sendable, Equatable, Identifiable {
     public let authorEmail: String
     public let authorDate: Date
     public let commitDate: Date
-    /// `%D` decorations as git prints them: "HEAD -> main", "origin/main", "tag: v1.0".
+    /// `%D` decorations as git prints them with `--decorate=full`:
+    /// "HEAD -> refs/heads/main", "refs/remotes/origin/main", "tag: refs/tags/v1.0".
     public let refs: [String]
     /// The raw message, trailing newlines removed.
     public let message: String
@@ -30,6 +31,20 @@ public struct Commit: Sendable, Equatable, Identifiable {
         return "\(lines[0].dropFirst(2).dropLast(2)) · \(lines[1].dropFirst(3))"
     }
 
+    /// The refs pointing here, by kind. A remote's HEAD only points at its
+    /// default branch, so it is left out.
+    public var decorations: [CommitRef] {
+        refs.compactMap { ref in
+            if ref == "HEAD" { return CommitRef(kind: .detachedHead, name: "HEAD") }
+            if ref.hasPrefix("HEAD -> ") { return CommitRef(kind: .head, name: CommitRef.shortName(ref.dropFirst("HEAD -> ".count))) }
+            if ref.hasPrefix("tag: ") { return CommitRef(kind: .tag, name: CommitRef.shortName(ref.dropFirst("tag: ".count))) }
+            if ref.hasPrefix("refs/remotes/") {
+                return ref.hasSuffix("/HEAD") ? nil : CommitRef(kind: .remote, name: CommitRef.shortName(Substring(ref)))
+            }
+            return CommitRef(kind: .local, name: CommitRef.shortName(Substring(ref)))
+        }
+    }
+
     /// Everything after the first line.
     public var body: String {
         guard let newline = message.firstIndex(of: "\n") else { return "" }
@@ -44,4 +59,26 @@ public struct CommitFileChange: Sendable, Equatable, Identifiable {
     public let change: FileChange
 
     public var id: String { path }
+}
+
+/// A branch or tag shown next to a commit in History.
+public struct CommitRef: Sendable, Hashable {
+    public enum Kind: Sendable, Hashable {
+        /// The checked-out branch.
+        case head
+        /// HEAD with no branch.
+        case detachedHead
+        case local, remote, tag
+    }
+
+    public let kind: Kind
+    /// "main", "origin/main", "v1.0".
+    public let name: String
+
+    static func shortName(_ ref: Substring) -> String {
+        for prefix in ["refs/heads/", "refs/remotes/", "refs/tags/"] where ref.hasPrefix(prefix) {
+            return String(ref.dropFirst(prefix.count))
+        }
+        return String(ref)
+    }
 }
