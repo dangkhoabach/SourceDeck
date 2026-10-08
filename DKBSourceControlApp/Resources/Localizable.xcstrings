@@ -1,0 +1,228 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Appearance" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Giao diện"
+          }
+        }
+      }
+    },
+    "Dark" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tối"
+          }
+        }
+      }
+    },
+    "Dashboard" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tổng quan"
+          }
+        }
+      }
+    },
+    "Default (login shell unavailable)" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mặc định (không đọc được login shell)"
+          }
+        }
+      }
+    },
+    "DKB Source Control needs git %@ or later. Update Xcode or the Command Line Tools." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DKB Source Control cần git %@ trở lên. Hãy cập nhật Xcode hoặc Command Line Tools."
+          }
+        }
+      }
+    },
+    "EN" : {
+      "shouldTranslate" : false
+    },
+    "From your login shell" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lấy từ login shell của bạn"
+          }
+        }
+      }
+    },
+    "git" : {
+      "shouldTranslate" : false
+    },
+    "Git" : {
+      "shouldTranslate" : false
+    },
+    "git %@ is too old" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "git %@ quá cũ"
+          }
+        }
+      }
+    },
+    "git not found" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Không tìm thấy git"
+          }
+        }
+      }
+    },
+    "Language" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ngôn ngữ"
+          }
+        }
+      }
+    },
+    "Light" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sáng"
+          }
+        }
+      }
+    },
+    "Looking for git…" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đang tìm git…"
+          }
+        }
+      }
+    },
+    "Looking…" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đang tìm…"
+          }
+        }
+      }
+    },
+    "No file selected" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chưa chọn file"
+          }
+        }
+      }
+    },
+    "No repositories yet" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chưa có repository nào"
+          }
+        }
+      }
+    },
+    "Nothing at %@ answered `git --version`. Install the Command Line Tools with `xcode-select --install`." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Không có gì ở %@ trả lời `git --version`. Hãy cài Command Line Tools bằng `xcode-select --install`."
+          }
+        }
+      }
+    },
+    "PATH for hooks" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PATH cho hook"
+          }
+        }
+      }
+    },
+    "Repositories" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repository"
+          }
+        }
+      }
+    },
+    "Select a repository" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn một repository"
+          }
+        }
+      }
+    },
+    "System" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hệ thống"
+          }
+        }
+      }
+    },
+    "The repository list can't be opened" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Không mở được danh sách repository"
+          }
+        }
+      }
+    },
+    "Theme" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chủ đề"
+          }
+        }
+      }
+    },
+    "VI" : {
+      "shouldTranslate" : false
+    }
+  },
+  "version" : "1.0"
+}

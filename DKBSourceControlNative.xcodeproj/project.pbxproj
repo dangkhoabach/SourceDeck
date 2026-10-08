@@ -1,0 +1,474 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1ADE59772C8453018CCB17D3 /* DKBSourceControlCore in Frameworks */ = {isa = PBXBuildFile; productRef = C5CC705E8E6148410A6B1D0F /* DKBSourceControlCore */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		D22C96AF8001179275E17696 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D337767E32645222E543050A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 45941F22D957DCE1DBA805F9;
+			remoteInfo = DKBSourceControlApp;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		8FFBC78C2FF1F9F65B134B11 /* Local.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Local.xcconfig; sourceTree = "<group>"; };
+		4C6C578FD141A31A17ACD5B3 /* DKBSourceControlCore */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = DKBSourceControlCore; sourceTree = "<group>"; };
+		442A741A8F1973B0E3063D6E /* DKB Source Control.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "DKB Source Control.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		F01CE1AE338965131EC51C97 /* DKBSourceControlAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DKBSourceControlAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		A8D21B85A1FAF49B704EB978 /* Exceptions for "DKBSourceControlApp" folder in "DKBSourceControlApp" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 45941F22D957DCE1DBA805F9 /* DKBSourceControlApp */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		64988F6DA3F5B273891F6A7E /* DKBSourceControlApp */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A8D21B85A1FAF49B704EB978 /* Exceptions for "DKBSourceControlApp" folder in "DKBSourceControlApp" target */,
+			);
+			path = DKBSourceControlApp;
+			sourceTree = "<group>";
+		};
+		30B6DE573B4E5BFF30B9EE09 /* DKBSourceControlAppTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = DKBSourceControlAppTests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		68A2C8920AB565FD5D836854 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1ADE59772C8453018CCB17D3 /* DKBSourceControlCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0970CDB0BFB5989C043EEB5D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		603B574641E6379EBD42AC8F = {
+			isa = PBXGroup;
+			children = (
+				8FFBC78C2FF1F9F65B134B11 /* Local.xcconfig */,
+				4C6C578FD141A31A17ACD5B3 /* DKBSourceControlCore */,
+				64988F6DA3F5B273891F6A7E /* DKBSourceControlApp */,
+				30B6DE573B4E5BFF30B9EE09 /* DKBSourceControlAppTests */,
+				DF56FFA7C938A947ECF4D802 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		DF56FFA7C938A947ECF4D802 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				442A741A8F1973B0E3063D6E /* DKB Source Control.app */,
+				F01CE1AE338965131EC51C97 /* DKBSourceControlAppTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		45941F22D957DCE1DBA805F9 /* DKBSourceControlApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 97C91ED742A3E365F35470D7 /* Build configuration list for PBXNativeTarget "DKBSourceControlApp" */;
+			buildPhases = (
+				4D9D91BF581D79C3EF9E13D4 /* Sources */,
+				68A2C8920AB565FD5D836854 /* Frameworks */,
+				13D070615AF58861AFED9DA4 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				64988F6DA3F5B273891F6A7E /* DKBSourceControlApp */,
+			);
+			name = DKBSourceControlApp;
+			packageProductDependencies = (
+				C5CC705E8E6148410A6B1D0F /* DKBSourceControlCore */,
+			);
+			productName = DKBSourceControlApp;
+			productReference = 442A741A8F1973B0E3063D6E /* DKB Source Control.app */;
+			productType = "com.apple.product-type.application";
+		};
+		BB4BE7C4807D6D6717C3C022 /* DKBSourceControlAppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2E29D5506AF5A6D86AF5ABCC /* Build configuration list for PBXNativeTarget "DKBSourceControlAppTests" */;
+			buildPhases = (
+				300C65072CD06F4948E295E1 /* Sources */,
+				0970CDB0BFB5989C043EEB5D /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A85109C0799B1F28EBFDE78B /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				30B6DE573B4E5BFF30B9EE09 /* DKBSourceControlAppTests */,
+			);
+			name = DKBSourceControlAppTests;
+			packageProductDependencies = (
+			);
+			productName = DKBSourceControlAppTests;
+			productReference = F01CE1AE338965131EC51C97 /* DKBSourceControlAppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		D337767E32645222E543050A /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastSwiftUpdateCheck = 2700;
+				LastUpgradeCheck = 2700;
+				TargetAttributes = {
+					45941F22D957DCE1DBA805F9 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					BB4BE7C4807D6D6717C3C022 = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = 45941F22D957DCE1DBA805F9;
+					};
+				};
+			};
+			buildConfigurationList = F4DC9F4BC36D40BE2BA17BA3 /* Build configuration list for PBXProject "DKBSourceControlNative" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+				vi,
+			);
+			mainGroup = 603B574641E6379EBD42AC8F;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				1D165971D6306B320454485B /* XCLocalSwiftPackageReference "DKBSourceControlCore" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = DF56FFA7C938A947ECF4D802 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				45941F22D957DCE1DBA805F9 /* DKBSourceControlApp */,
+				BB4BE7C4807D6D6717C3C022 /* DKBSourceControlAppTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		13D070615AF58861AFED9DA4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		4D9D91BF581D79C3EF9E13D4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		300C65072CD06F4948E295E1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A85109C0799B1F28EBFDE78B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 45941F22D957DCE1DBA805F9 /* DKBSourceControlApp */;
+			targetProxy = D22C96AF8001179275E17696 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		D27893C287D1D34315C5FFA5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 8FFBC78C2FF1F9F65B134B11 /* Local.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Manual;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		4E3D8E89053D3AF231179CB3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 8FFBC78C2FF1F9F65B134B11 /* Local.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Manual;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		3BF8A37E8EC401835EC931F4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				DISABLE_MANUAL_TARGET_ORDER_BUILD_WARNING = YES;
+				INFOPLIST_FILE = DKBSourceControlApp/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.dangkhoabach.dkb-source-control";
+				PRODUCT_NAME = "DKB Source Control";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		6D8265CFB7EA95A857EF61D9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
+				COMBINE_HIDPI_IMAGES = YES;
+				DISABLE_MANUAL_TARGET_ORDER_BUILD_WARNING = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = DKBSourceControlApp/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.dangkhoabach.dkb-source-control";
+				PRODUCT_NAME = "DKB Source Control";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		6D4F8D113117BF333DFECE96 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.dangkhoabach.dkb-source-control.tests";
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/DKB Source Control.app/Contents/MacOS/DKB Source Control";
+			};
+			name = Debug;
+		};
+		535556E6B981B809111930F7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.dangkhoabach.dkb-source-control.tests";
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/DKB Source Control.app/Contents/MacOS/DKB Source Control";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		97C91ED742A3E365F35470D7 /* Build configuration list for PBXNativeTarget "DKBSourceControlApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3BF8A37E8EC401835EC931F4 /* Debug */,
+				6D8265CFB7EA95A857EF61D9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2E29D5506AF5A6D86AF5ABCC /* Build configuration list for PBXNativeTarget "DKBSourceControlAppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6D4F8D113117BF333DFECE96 /* Debug */,
+				535556E6B981B809111930F7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F4DC9F4BC36D40BE2BA17BA3 /* Build configuration list for PBXProject "DKBSourceControlNative" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D27893C287D1D34315C5FFA5 /* Debug */,
+				4E3D8E89053D3AF231179CB3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		1D165971D6306B320454485B /* XCLocalSwiftPackageReference "DKBSourceControlCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = DKBSourceControlCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C5CC705E8E6148410A6B1D0F /* DKBSourceControlCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DKBSourceControlCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = D337767E32645222E543050A /* Project object */;
+}
