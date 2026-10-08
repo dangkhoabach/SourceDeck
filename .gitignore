@@ -1,0 +1,34 @@
+# Logs
+logs
+*.log
+
+# Local signing identity for this machine (CODE_SIGN_IDENTITY) — never commit
+Local.xcconfig
+
+# Local build output — reproducible
+release-output/
+
+# Xcode / Swift Package Manager. Tracked inside the .xcodeproj: project.pbxproj,
+# the shared scheme (serial build order) and the workspace's Package.resolved.
+build/
+.build/
+DerivedData/
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcodeproj/project.xcworkspace/
+*.xcodeproj/project.xcworkspace/*
+!*.xcodeproj/project.xcworkspace/xcshareddata/
+*.xcuserstate
+xcuserdata/
+.swiftpm/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.swp
+
+# Coverage data left behind by xcodebuild test
+*.profraw
