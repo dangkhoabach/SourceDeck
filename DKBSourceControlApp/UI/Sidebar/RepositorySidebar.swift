@@ -1,3 +1,4 @@
+import AppKit
 import DKBSourceControlCore
 import SwiftUI
 
@@ -10,28 +11,6 @@ struct RepositorySidebar: View {
     @State private var removing: RepositoryModel?
 
     var body: some View {
-        // The Add bar sits under the list rather than in its bottom safe
-        // area inset: a Menu in there popped up far from its button.
-        VStack(spacing: 0) {
-            repositoryList
-            addBar
-        }
-        .alert("Rename Repository", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
-            TextField("Name", text: $draftName)
-            Button("Rename") { if let renaming { list.rename(renaming, to: draftName) } }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Leave it empty to use the folder name.")
-        }
-        .confirmationDialog("Remove “\(removing?.record.name ?? "")” from the list?",
-                            isPresented: Binding(get: { removing != nil }, set: { if !$0 { removing = nil } })) {
-            Button("Remove", role: .destructive) { if let removing { list.remove(removing) } }
-        } message: {
-            Text("The folder and its files stay on disk.")
-        }
-    }
-
-    private var repositoryList: some View {
         List(selection: $list.selection) {
             Label("Dashboard", systemImage: "square.grid.2x2")
                 .tag(RepositoryList.Selection.dashboard)
@@ -56,23 +35,90 @@ struct RepositorySidebar: View {
             Task { await list.add(urls) }
             return !urls.isEmpty
         }
+        .safeAreaInset(edge: .bottom) {
+            HStack {
+                AddMenuButton(list: list)
+                    .fixedSize()
+                Spacer()
+            }
+            .padding(10)
+        }
+        .alert("Rename Repository", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
+            TextField("Name", text: $draftName)
+            Button("Rename") { if let renaming { list.rename(renaming, to: draftName) } }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Leave it empty to use the folder name.")
+        }
+        .confirmationDialog("Remove “\(removing?.record.name ?? "")” from the list?",
+                            isPresented: Binding(get: { removing != nil }, set: { if !$0 { removing = nil } })) {
+            Button("Remove", role: .destructive) { if let removing { list.remove(removing) } }
+        } message: {
+            Text("The folder and its files stay on disk.")
+        }
+    }
+}
+
+/// "+ Add" under the list, an AppKit button that opens its menu itself.
+///
+/// With a second display to the left (this Mac: the built-in screen at
+/// x −1800), macOS 27 places a menu whose left edge comes within about 11 pt
+/// of the screen's left edge on the other display's coordinates: it answers
+/// the mouse by the button but is drawn 1800 pt to the right. A window at
+/// full width puts this button at x = 10, so the menu is moved right when it
+/// would start that close to the edge. SwiftUI's `Menu` and a pull-down
+/// `NSPopUpButton` both failed there.
+private struct AddMenuButton: NSViewRepresentable {
+    let list: RepositoryList
+
+    func makeNSView(context: Context) -> NSButton {
+        let button = NSButton(title: "", target: context.coordinator, action: #selector(Coordinator.open(_:)))
+        button.isBordered = false
+        button.image = NSImage(systemSymbolName: "plus", accessibilityDescription: nil)
+        button.imagePosition = .imageLeading
+        return button
     }
 
-    private var addBar: some View {
-        HStack {
-            Menu {
-                Button("Clone Repository…") { list.isCloneSheetPresented = true }
-                Button("Add Repository…") { list.chooseFoldersToAdd() }
-                Button("Scan Folder…") { list.isScanSheetPresented = true }
-            } label: {
-                Label("Add", systemImage: "plus")
+    /// Titles are set on every update, so a language change in Settings shows here.
+    func updateNSView(_ button: NSButton, context: Context) {
+        context.coordinator.list = list
+        button.title = String(localized: "Add", bundle: AppLocale.bundle)
+        button.toolTip = String(localized: "Clone a repository, add one from disk or scan a folder for repositories", bundle: AppLocale.bundle)
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator(list: list) }
+
+    @MainActor
+    final class Coordinator: NSObject {
+        var list: RepositoryList
+        /// The menu's left edge stays at least this far from its screen's left edge.
+        static let edgeMargin: CGFloat = 20
+
+        init(list: RepositoryList) { self.list = list }
+
+        @objc func open(_ sender: NSButton) {
+            let menu = NSMenu()
+            for (name, action) in [
+                (String(localized: "Clone Repository…", bundle: AppLocale.bundle), #selector(clone)),
+                (String(localized: "Add Repository…", bundle: AppLocale.bundle), #selector(add)),
+                (String(localized: "Scan Folder…", bundle: AppLocale.bundle), #selector(scan)),
+            ] {
+                let item = NSMenuItem(title: name, action: action, keyEquivalent: "")
+                item.target = self
+                menu.addItem(item)
             }
-            .menuStyle(.borderlessButton)
-            .fixedSize()
-            .help("Clone a repository, add one from disk or scan a folder for repositories")
-            Spacer()
+            var shift: CGFloat = 0
+            if let window = sender.window, let screen = window.screen {
+                let left = window.convertToScreen(sender.convert(sender.bounds, to: nil)).minX
+                shift = max(0, screen.frame.minX + Self.edgeMargin - left)
+            }
+            // Under the button; AppKit moves it above when there's no room.
+            menu.popUp(positioning: nil, at: NSPoint(x: shift, y: sender.isFlipped ? sender.bounds.height + 4 : -4), in: sender)
         }
-        .padding(10)
+
+        @objc func clone() { list.isCloneSheetPresented = true }
+        @objc func add() { list.chooseFoldersToAdd() }
+        @objc func scan() { list.isScanSheetPresented = true }
     }
 }
 
