@@ -10,6 +10,7 @@ enum AppSettings {
     static let lastSelectedRepositoryKey = "lastSelectedRepositoryId"
     static let diffContextKey = "diffContext"
     static let diffIgnoresWhitespaceKey = "diffIgnoresWhitespace"
+    static let fileListLayoutKey = "fileListLayout"
 
     /// `/usr/bin/git` unless the user chose another one; read at launch.
     static var gitPath: String {

@@ -4,9 +4,11 @@ import SwiftUI
 
 /// Conflicts, Staged and Changes (plan F2): a checkbox moves a file
 /// between Staged and Changes, Space does it for the selection, ⌘⌫
-/// discards it after asking.
+/// discards it after asking. As a list or as a tree, where a folder's
+/// checkbox moves every file under it.
 struct ChangeListView: View {
     @Bindable var workingCopy: WorkingCopyModel
+    @AppStorage(AppSettings.fileListLayoutKey) private var layout = FileListLayout.list
     @FocusState private var searchFocused: Bool
     @FocusState private var listFocused: Bool
 
@@ -15,10 +17,13 @@ struct ChangeListView: View {
             BranchLine(model: workingCopy.model)
                 .padding(.horizontal, 12)
                 .padding(.top, 10)
-            NativeSearchField(text: $workingCopy.search, placeholder: String(localized: "Filter files", bundle: AppLocale.bundle))
-                .focused($searchFocused)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 8)
+            HStack(spacing: 6) {
+                NativeSearchField(text: $workingCopy.search, placeholder: String(localized: "Filter files", bundle: AppLocale.bundle))
+                    .focused($searchFocused)
+                FileListLayoutPicker()
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
             list
         }
         .background {
@@ -93,14 +98,55 @@ struct ChangeListView: View {
 
     /// Identified by area and path: a partly staged file is in two lists,
     /// and a path alone as the id made both rows look selected.
+    @ViewBuilder
     private func rows(_ entries: [StatusEntry], area: WorkingCopyModel.Area) -> some View {
-        let rows = entries.map { (row: WorkingCopyModel.Row(area: area, path: $0.path), entry: $0) }
-        return ForEach(rows, id: \.row) { row, entry in
-            ChangeRow(entry: entry, area: area) {
-                Task { area == .staged ? await workingCopy.unstage([entry]) : await workingCopy.stage([entry]) }
+        if layout == .tree {
+            treeRows(entries, area: area)
+        } else {
+            let rows = entries.map { (row: WorkingCopyModel.Row(area: area, path: $0.path), entry: $0) }
+            ForEach(rows, id: \.row) { _, entry in
+                changeRow(entry, area: area)
             }
-            .tag(row)
         }
+    }
+
+    /// Folders have no tag, so only files can be selected; a folder's
+    /// checkbox stages or unstages everything under it.
+    private func treeRows(_ entries: [StatusEntry], area: WorkingCopyModel.Area) -> some View {
+        let collapsed = workingCopy.collapsedFolders[area, default: []]
+        let rows = FileTree.rows(entries, path: \.path, collapsed: collapsed).map { row in
+            switch row {
+            case .folder(let folder, _): (id: "folder:" + folder.path, row: row)
+            case .file(let entry, _): (id: entry.path, row: row)
+            }
+        }
+        return ForEach(rows, id: \.id) { _, row in
+            switch row {
+            case .folder(let folder, let depth):
+                FolderRow(folder: folder, depth: depth, isExpanded: !collapsed.contains(folder.path)) {
+                    workingCopy.collapsedFolders[area, default: []].formSymmetricDifference([folder.path])
+                } accessory: {
+                    if area != .conflicted {
+                        StageCheckbox(area: area) { toggleStage(folder.items, area: area) }
+                    }
+                }
+                .accessibilityAction(named: area == .staged ? Text("Unstage") : Text("Stage")) {
+                    if area != .conflicted { toggleStage(folder.items, area: area) }
+                }
+            case .file(let entry, let depth):
+                changeRow(entry, area: area, showsFolder: false)
+                    .treeIndent(depth)
+            }
+        }
+    }
+
+    private func changeRow(_ entry: StatusEntry, area: WorkingCopyModel.Area, showsFolder: Bool = true) -> some View {
+        ChangeRow(entry: entry, area: area, showsFolder: showsFolder) { toggleStage([entry], area: area) }
+            .tag(WorkingCopyModel.Row(area: area, path: entry.path))
+    }
+
+    private func toggleStage(_ entries: [StatusEntry], area: WorkingCopyModel.Area) {
+        Task { area == .staged ? await workingCopy.unstage(entries) : await workingCopy.stage(entries) }
     }
 
     @ViewBuilder
@@ -189,22 +235,35 @@ extension SectionTitle where Actions == EmptyView {
     }
 }
 
-/// Checkbox, status letter, then the folder dimmed and the name in bold;
-/// a rename shows where it came from. A file that looks like a secret is
-/// tinted before it is even staged (plan F4b).
+/// Checked in Staged, unchecked in Changes: a click moves the row to the
+/// other list.
+private struct StageCheckbox: View {
+    let area: WorkingCopyModel.Area
+    let toggle: () -> Void
+
+    var body: some View {
+        Toggle(isOn: Binding(get: { area == .staged }, set: { _ in toggle() })) { EmptyView() }
+            .toggleStyle(.checkbox)
+            .labelsHidden()
+            .help(area == .staged ? "Unstage" : "Stage")
+    }
+}
+
+/// Checkbox, status letter, then the folder dimmed and the name in bold
+/// (the name alone in the tree, under its folder); a rename shows where it
+/// came from. A file that looks like a secret is tinted before it is even
+/// staged (plan F4b).
 private struct ChangeRow: View {
     let entry: StatusEntry
     let area: WorkingCopyModel.Area
+    let showsFolder: Bool
     let toggle: () -> Void
 
     var body: some View {
         let sensitive = SensitiveChangeScanner.pathRule(for: entry.path) != nil
         HStack(spacing: 6) {
             if area != .conflicted {
-                Toggle(isOn: Binding(get: { area == .staged }, set: { _ in toggle() })) { EmptyView() }
-                    .toggleStyle(.checkbox)
-                    .labelsHidden()
-                    .help(area == .staged ? "Unstage" : "Stage")
+                StageCheckbox(area: area, toggle: toggle)
             }
             StatusLetter(change: change)
             pathText
@@ -248,7 +307,7 @@ private struct ChangeRow: View {
         if area == .staged, let original = entry.originalPath {
             text = Text(verbatim: original + " → ").foregroundStyle(.secondary)
         }
-        if !folder.isEmpty { text = text + Text(verbatim: folder + "/").foregroundStyle(.secondary) }
+        if showsFolder, !folder.isEmpty { text = text + Text(verbatim: folder + "/").foregroundStyle(.secondary) }
         return text + Text(verbatim: name).fontWeight(.medium)
     }
 }

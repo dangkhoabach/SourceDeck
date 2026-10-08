@@ -32,17 +32,19 @@ is in [`docs/dkb-source-control-build-plan.md`](docs/dkb-source-control-build-pl
   sidebar or scanning a folder for repositories.
 - **Working Copy** (⌘1): Staged and Changes lists with a checkbox per file,
   rename and conflict markers, a filter, and files that look like secrets
-  tinted red. The diff stages, unstages or discards a whole hunk or only the
-  lines picked in its gutter; changed words are marked inside a line; context
-  and whitespace can be changed. The list follows changes made in other apps
-  within a second, and stays quiet while a build writes into ignored folders.
+  tinted red. Shown as a flat list or as a tree of folders that open and
+  close, with a checkbox per folder that stages everything under it. The diff
+  stages, unstages or discards a whole hunk or only the lines picked in its
+  gutter; changed words are marked inside a line; context and whitespace can
+  be changed. The list follows changes made in other apps within a second,
+  and stays quiet while a build writes into ignored folders.
 - **Commit composer**: keyword menu, an outline of details and sub-details
   (⏎ adds one, ⇥ / ⇧⇥ change its level), raw text when preferred, the reason
   Commit is greyed out, amend while the last commit is still local, push after
   commit. Drafts are kept per repository across launches.
 - **History** (⌘2): 200 commits at a time, refs by kind, search by message,
-  author or path, each commit's files and diff, copy SHA or message, open on
-  GitHub, reuse a message.
+  author or path, each commit's files (list or tree) and diff, copy SHA or
+  message, open on GitHub, reuse a message.
 - **Branches** (⌘3): switch (stashing changes first when asked), create from
   HEAD, delete merged branches, stash, pop and drop.
 - **Fetch, Pull, Push** with git's own output in a log (⌥⌘L) and a one-line

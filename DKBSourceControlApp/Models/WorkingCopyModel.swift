@@ -56,6 +56,9 @@ final class WorkingCopyModel {
     /// (plan D8, line mode). Cleared whenever that diff changes.
     var selectedLines: [Int: Set<Int>] = [:]
     var discardRequest: DiscardRequest?
+    /// Folders closed in the tree layout, per list: the same folder can be
+    /// open under Staged and closed under Changes.
+    var collapsedFolders: [Area: Set<String>] = [:]
 
     static let maxDiffFileSize = 2_000_000
 

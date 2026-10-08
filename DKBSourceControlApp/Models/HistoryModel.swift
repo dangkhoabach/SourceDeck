@@ -22,6 +22,8 @@ final class HistoryModel {
     var selection: String?
     private(set) var files: [CommitFileChange] = []
     var selectedFile: String?
+    /// Folders closed in the tree layout; kept from one commit to the next.
+    var collapsedFolders: Set<String> = []
     private(set) var fileDiff: DiffFile?
     @ObservationIgnored private var generation = 0
     @ObservationIgnored private var loadedQuery: Query?

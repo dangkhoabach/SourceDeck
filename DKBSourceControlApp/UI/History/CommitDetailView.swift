@@ -5,6 +5,7 @@ import SwiftUI
 /// changed (a merge against its first parent) and a read-only diff.
 struct CommitDetailView: View {
     @Bindable var history: HistoryModel
+    @AppStorage(AppSettings.fileListLayoutKey) private var layout = FileListLayout.list
 
     /// The diff follows the file, the commit and the viewer's options.
     private struct DiffKey: Equatable {
@@ -28,18 +29,19 @@ struct CommitDetailView: View {
                                 .foregroundStyle(.secondary)
                         }
                         Section {
-                            ForEach(history.files) { file in
-                                HStack(spacing: 6) {
-                                    StatusLetter(change: file.change)
-                                    if let original = file.originalPath {
-                                        Text(verbatim: original + " → ").foregroundStyle(.secondary)
-                                    }
-                                    Text(verbatim: file.path).lineLimit(1).truncationMode(.head)
+                            if layout == .tree {
+                                fileTree
+                            } else {
+                                ForEach(history.files) { file in
+                                    CommitFileRow(file: file, showsFolder: true)
                                 }
-                                .tag(file.path)
                             }
                         } header: {
-                            Text("Files \(history.files.count)")
+                            HStack {
+                                Text("Files \(history.files.count)")
+                                Spacer()
+                                FileListLayoutPicker().controlSize(.small)
+                            }
                         }
                     }
                 }
@@ -75,6 +77,47 @@ struct CommitDetailView: View {
             ContentUnavailableView("No commit selected", systemImage: "clock",
                                    description: Text("Select a commit to see its message and files."))
         }
+    }
+
+    /// Folders have no tag: only files can be selected.
+    private var fileTree: some View {
+        let rows = FileTree.rows(history.files, path: \.path, collapsed: history.collapsedFolders).map { row in
+            switch row {
+            case .folder(let folder, _): (id: "folder:" + folder.path, row: row)
+            case .file(let file, _): (id: file.path, row: row)
+            }
+        }
+        return ForEach(rows, id: \.id) { _, row in
+            switch row {
+            case .folder(let folder, let depth):
+                FolderRow(folder: folder, depth: depth, isExpanded: !history.collapsedFolders.contains(folder.path)) {
+                    history.collapsedFolders.formSymmetricDifference([folder.path])
+                }
+            case .file(let file, let depth):
+                CommitFileRow(file: file, showsFolder: false)
+                    .treeIndent(depth)
+            }
+        }
+    }
+}
+
+/// Status letter and path, or the name alone under its folder in the tree;
+/// a rename shows where it came from.
+private struct CommitFileRow: View {
+    let file: CommitFileChange
+    let showsFolder: Bool
+
+    var body: some View {
+        HStack(spacing: 6) {
+            StatusLetter(change: file.change)
+            if let original = file.originalPath {
+                Text(verbatim: original + " → ").foregroundStyle(.secondary)
+            }
+            Text(verbatim: showsFolder ? file.path : (file.path as NSString).lastPathComponent)
+                .lineLimit(1)
+                .truncationMode(.head)
+        }
+        .tag(file.path)
     }
 }
 

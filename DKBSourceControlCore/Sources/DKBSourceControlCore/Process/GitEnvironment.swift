@@ -72,7 +72,11 @@ public struct GitEnvironment: Sendable, Equatable {
     static func loginShellPath(shell: String, timeout: Duration) async -> String? {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: shell)
-        process.arguments = ["-l", "-i", "-c", "printf '\(pathMarker)%s\(pathMarker)' \"$PATH\""]
+        // `+m`: no job control. Started from Terminal (`swift test`,
+        // release.sh) the shell shares its terminal, and an interactive zsh
+        // with job control waits to take that terminal over until the
+        // timeout; from Finder there is no terminal and it made no difference.
+        process.arguments = ["-l", "-i", "+m", "-c", "printf '\(pathMarker)%s\(pathMarker)' \"$PATH\""]
         let output = try? await ProcessRunner.run(process, stdin: nil, timeout: timeout)
         guard let output, output.exitCode == 0 else { return nil }
         return parseMarkedPath(String(decoding: output.stdout, as: UTF8.self))

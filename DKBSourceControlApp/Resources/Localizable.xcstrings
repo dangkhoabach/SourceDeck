@@ -520,6 +520,26 @@
         }
       }
     },
+    "Collapse" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thu gọn"
+          }
+        }
+      }
+    },
+    "Collapsed" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đang thu gọn"
+          }
+        }
+      }
+    },
     "Commit" : {
       "localizations" : {
         "vi" : {
@@ -1023,6 +1043,26 @@
         }
       }
     },
+    "Expand" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở"
+          }
+        }
+      }
+    },
+    "Expanded" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đang mở"
+          }
+        }
+      }
+    },
     "Fast-forward only" : {
       "localizations" : {
         "vi" : {
@@ -1153,10 +1193,10 @@
         }
       }
     },
-    "git" : {
+    "Git" : {
       "shouldTranslate" : false
     },
-    "Git" : {
+    "git" : {
       "shouldTranslate" : false
     },
     "git %@" : {
@@ -1338,6 +1378,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ngôn ngữ"
+          }
+        }
+      }
+    },
+    "Layout" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bố cục"
           }
         }
       }
@@ -2458,6 +2508,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "File nhạy cảm và secret"
+          }
+        }
+      }
+    },
+    "Show as List" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiện dạng danh sách"
+          }
+        }
+      }
+    },
+    "Show as Tree" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiện dạng cây"
           }
         }
       }
