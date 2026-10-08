@@ -10,6 +10,28 @@ struct RepositorySidebar: View {
     @State private var removing: RepositoryModel?
 
     var body: some View {
+        // The Add bar sits under the list rather than in its bottom safe
+        // area inset: a Menu in there popped up far from its button.
+        VStack(spacing: 0) {
+            repositoryList
+            addBar
+        }
+        .alert("Rename Repository", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
+            TextField("Name", text: $draftName)
+            Button("Rename") { if let renaming { list.rename(renaming, to: draftName) } }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Leave it empty to use the folder name.")
+        }
+        .confirmationDialog("Remove “\(removing?.record.name ?? "")” from the list?",
+                            isPresented: Binding(get: { removing != nil }, set: { if !$0 { removing = nil } })) {
+            Button("Remove", role: .destructive) { if let removing { list.remove(removing) } }
+        } message: {
+            Text("The folder and its files stay on disk.")
+        }
+    }
+
+    private var repositoryList: some View {
         List(selection: $list.selection) {
             Label("Dashboard", systemImage: "square.grid.2x2")
                 .tag(RepositoryList.Selection.dashboard)
@@ -34,34 +56,23 @@ struct RepositorySidebar: View {
             Task { await list.add(urls) }
             return !urls.isEmpty
         }
-        .safeAreaInset(edge: .bottom) {
-            HStack {
-                Menu {
-                    Button("Add Repository…") { list.chooseFoldersToAdd() }
-                    Button("Scan Folder…") { list.isScanSheetPresented = true }
-                } label: {
-                    Label("Add", systemImage: "plus")
-                }
-                .menuStyle(.borderlessButton)
-                .fixedSize()
-                .help("Add a repository or scan a folder for repositories")
-                Spacer()
+    }
+
+    private var addBar: some View {
+        HStack {
+            Menu {
+                Button("Clone Repository…") { list.isCloneSheetPresented = true }
+                Button("Add Repository…") { list.chooseFoldersToAdd() }
+                Button("Scan Folder…") { list.isScanSheetPresented = true }
+            } label: {
+                Label("Add", systemImage: "plus")
             }
-            .padding(10)
+            .menuStyle(.borderlessButton)
+            .fixedSize()
+            .help("Clone a repository, add one from disk or scan a folder for repositories")
+            Spacer()
         }
-        .alert("Rename Repository", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
-            TextField("Name", text: $draftName)
-            Button("Rename") { if let renaming { list.rename(renaming, to: draftName) } }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Leave it empty to use the folder name.")
-        }
-        .confirmationDialog("Remove “\(removing?.record.name ?? "")” from the list?",
-                            isPresented: Binding(get: { removing != nil }, set: { if !$0 { removing = nil } })) {
-            Button("Remove", role: .destructive) { if let removing { list.remove(removing) } }
-        } message: {
-            Text("The folder and its files stay on disk.")
-        }
+        .padding(10)
     }
 }
 

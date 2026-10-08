@@ -28,8 +28,8 @@ is in [`docs/dkb-source-control-build-plan.md`](docs/dkb-source-control-build-pl
 
 - **Dashboard** of every added repository: branch, ahead and behind, staged,
   changed and new files, the last commit; refresh all, fetch all, optional
-  automatic fetch. Add a repository by choosing a folder, dropping it on the
-  sidebar or scanning a folder for repositories.
+  automatic fetch. Add a repository by cloning it from a URL, choosing a
+  folder, dropping it on the sidebar or scanning a folder for repositories.
 - **Working Copy** (⌘1): Staged and Changes lists with a checkbox per file,
   rename and conflict markers, a filter, and files that look like secrets
   tinted red. Shown as a flat list or as a tree of folders that open and
@@ -81,7 +81,7 @@ Terminal and the installed editors.
 | Space | Stage or unstage the selected files |
 | ⌘⌫ | Discard the selected files (asks first) |
 | ⌘F | Filter files, or search history |
-| ⌘O · ⇧⌘O | Add a repository · Scan a folder |
+| ⌘N · ⌘O · ⇧⌘O | Clone a repository · Add a repository · Scan a folder |
 | ⌥⌘L | Show or hide the git output |
 
 ## How it works

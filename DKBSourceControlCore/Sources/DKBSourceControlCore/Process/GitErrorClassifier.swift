@@ -9,6 +9,12 @@ public struct GitCommandError: Error, Sendable, Equatable {
         case networkUnreachable
         /// No remote of that name, or its address leads nowhere.
         case remoteNotFound
+        /// Clone: nothing at that address, or no access to it (GitHub
+        /// answers "not found" for a private repository it won't show).
+        case repositoryNotFound
+        /// SSH refused a server whose key isn't in known_hosts yet: with no
+        /// terminal, ssh can't ask whether to trust it.
+        case hostKeyUnverified
         /// Pull on a branch that was never published.
         case noUpstream
         /// Pull or push with HEAD on no branch.
@@ -55,6 +61,8 @@ enum GitErrorClassifier {
         (.authenticationFailed, ["could not read Username", "could not read Password", "Authentication failed",
                                  "Permission denied (publickey", "terminal prompts disabled", "Invalid username or token"]),
         (.remoteNotFound, ["does not appear to be a git repository"]),
+        (.repositoryNotFound, ["Repository not found", "' does not exist"]),
+        (.hostKeyUnverified, ["Host key verification failed"]),
         (.noUpstream, ["There is no tracking information"]),
         (.detachedHead, ["You are not currently on a branch"]),
         (.indexLocked, ["index.lock': File exists"]),

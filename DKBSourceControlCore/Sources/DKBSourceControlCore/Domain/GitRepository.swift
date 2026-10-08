@@ -64,6 +64,8 @@ public actor GitRepository {
 
     static let localTimeout = Duration.seconds(30)
     static let networkTimeout = Duration.seconds(120)
+    /// A large repository takes minutes; the user can cancel any time.
+    static let cloneTimeout = Duration.seconds(3600)
     static let lockRetryDelay = Duration.milliseconds(300)
     /// Fixed so the user's diff config can't change what the parser and
     /// `git apply` see: prefixes, colour, external tools, text conversion.
@@ -90,6 +92,29 @@ public actor GitRepository {
         guard result.succeeded else { throw GitCommandError(arguments: arguments, result: result) }
         let path = result.stdoutText.trimmingCharacters(in: .newlines)
         return GitRepository(root: URL(fileURLWithPath: path, isDirectory: true), git: git)
+    }
+
+    /// Clones `url` (anything `git clone` takes: HTTPS, SSH, a local path)
+    /// into `destination`, which must not exist yet or be an empty folder.
+    /// When the clone fails or the task is cancelled, git removes the folder
+    /// it created.
+    public static func clone(_ url: String, into destination: URL, git: GitProcess) async throws -> OperationOutput {
+        // After "--", a URL starting with "-" can't be read as an option.
+        let arguments = ["clone", "--", url, destination.path]
+        let result = try await git.run(arguments, in: destination.deletingLastPathComponent(), timeout: cloneTimeout)
+        guard result.succeeded else { throw GitCommandError(arguments: arguments, result: result) }
+        return OperationOutput(stdout: result.stdoutText, stderr: result.stderr)
+    }
+
+    /// The folder `git clone` would make for `url`: its last part without
+    /// ".git", for HTTPS ("https://github.com/o/repo.git"), SSH
+    /// ("git@github.com:o/repo.git") and local paths alike.
+    public static func cloneFolderName(for url: String) -> String {
+        var name = url.trimmingCharacters(in: .whitespacesAndNewlines)
+        while name.hasSuffix("/") { name.removeLast() }
+        if name.hasSuffix(".git") { name.removeLast(4) }
+        while name.hasSuffix("/") { name.removeLast() }
+        return String(name.split(whereSeparator: { $0 == "/" || $0 == ":" }).last ?? "")
     }
 
     // MARK: - Reads

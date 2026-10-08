@@ -120,6 +120,16 @@
         }
       }
     },
+    "A folder named “%@” already exists here and isn't empty." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ở đây đã có thư mục “%@” và thư mục đó không trống."
+          }
+        }
+      }
+    },
     "A merge is in progress" : {
       "localizations" : {
         "vi" : {
@@ -226,16 +236,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Thêm %lld repository"
-          }
-        }
-      }
-    },
-    "Add a repository or scan a folder for repositories" : {
-      "localizations" : {
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Thêm một repository hoặc quét thư mục để tìm repository"
           }
         }
       }
@@ -470,6 +470,16 @@
         }
       }
     },
+    "Choose" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn"
+          }
+        }
+      }
+    },
     "Choose Folder…" : {
       "localizations" : {
         "vi" : {
@@ -516,6 +526,66 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Xoá message"
+          }
+        }
+      }
+    },
+    "Clone" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clone"
+          }
+        }
+      }
+    },
+    "Clone a repository, add one from disk or scan a folder for repositories" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clone một repository, thêm một repository có sẵn trên máy hoặc quét thư mục để tìm repository"
+          }
+        }
+      }
+    },
+    "Clone into" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clone vào"
+          }
+        }
+      }
+    },
+    "Clone Repository" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clone repository"
+          }
+        }
+      }
+    },
+    "Clone Repository…" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clone repository…"
+          }
+        }
+      }
+    },
+    "Cloning…" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đang clone…"
           }
         }
       }
@@ -1179,6 +1249,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sửa các mục liệt kê dưới message, hoặc tiếp tục viết ở chế độ Raw."
+          }
+        }
+      }
+    },
+    "Folder name" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tên thư mục"
           }
         }
       }
@@ -2712,6 +2792,26 @@
         }
       }
     },
+    "Stop" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dừng"
+          }
+        }
+      }
+    },
+    "Stopped before it finished." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đã dừng trước khi xong."
+          }
+        }
+      }
+    },
     "Sub-detail" : {
       "localizations" : {
         "vi" : {
@@ -2952,6 +3052,16 @@
         }
       }
     },
+    "There is no repository at this address, or your account can't see it. Check the URL and your access." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Không có repository ở địa chỉ này, hoặc tài khoản của bạn không có quyền xem. Kiểm tra lại URL và quyền truy cập."
+          }
+        }
+      }
+    },
     "This branch has commits that aren't merged anywhere else, so it was kept." : {
       "localizations" : {
         "vi" : {
@@ -3008,6 +3118,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Thư mục này không còn là git repository."
+          }
+        }
+      }
+    },
+    "This Mac doesn't trust the server's SSH key yet. Run “ssh -T git@github.com” once in Terminal and answer yes, or use the HTTPS URL." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Máy Mac này chưa tin SSH key của server. Chạy “ssh -T git@github.com” một lần trong Terminal và trả lời yes, hoặc dùng URL HTTPS."
           }
         }
       }
@@ -3138,6 +3258,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "upstream đã bị xoá"
+          }
+        }
+      }
+    },
+    "URL" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URL"
           }
         }
       }

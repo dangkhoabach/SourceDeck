@@ -24,6 +24,8 @@ struct DKBSourceControlApp: App {
             // One main window (plan D4): every repository is a sidebar entry
             // of it, so File › New Window would only open a duplicate.
             CommandGroup(replacing: .newItem) {
+                Button("Clone Repository…") { AppServices.shared.repositories?.isCloneSheetPresented = true }
+                    .keyboardShortcut("n")
                 Button("Add Repository…") { AppServices.shared.repositories?.chooseFoldersToAdd() }
                     .keyboardShortcut("o")
                 Button("Scan Folder…") { AppServices.shared.repositories?.isScanSheetPresented = true }

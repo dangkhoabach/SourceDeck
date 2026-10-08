@@ -62,6 +62,8 @@ enum GitErrorText {
             case .authenticationFailed: "git couldn't sign in to the remote. Check the credentials saved in Keychain or your SSH key."
             case .networkUnreachable: "The remote's server can't be reached. Check the network connection, then try again."
             case .remoteNotFound: "The remote can't be reached: there is no remote named origin, or its address is wrong."
+            case .repositoryNotFound: "There is no repository at this address, or your account can't see it. Check the URL and your access."
+            case .hostKeyUnverified: "This Mac doesn't trust the server's SSH key yet. Run “ssh -T git@github.com” once in Terminal and answer yes, or use the HTTPS URL."
             case .noUpstream: "This branch has no upstream yet. Push it once to publish it."
             case .detachedHead: "HEAD isn't on a branch. Switch to a branch in Branches first."
             case .indexLocked: "Another git process is using this repository. Wait for it to finish, then try again."
@@ -78,6 +80,7 @@ enum GitErrorText {
         case is TrashService.Failure: "A file couldn't be moved to the Trash, so the discard stopped there."
         case GitError.timedOut: "git didn't finish in time and was stopped."
         case GitError.launchFailed: "git couldn't be started."
+        case is CancellationError: "Stopped before it finished."
         default: "Something went wrong."
         }
     }
@@ -88,6 +91,7 @@ enum GitErrorText {
         case let error as GitCommandError: error.output
         case GitError.launchFailed(let path, let reason): "\(path): \(reason)"
         case let error as TrashService.Failure: "\(error.path): \(error.underlying.localizedDescription)"
+        case is CancellationError: ""
         default: error.localizedDescription
         }
     }

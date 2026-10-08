@@ -54,6 +54,9 @@ private struct MainWindowView: View {
         .sheet(isPresented: $list.isScanSheetPresented) {
             ScanFolderSheet(list: list)
         }
+        .sheet(isPresented: $list.isCloneSheetPresented) {
+            CloneSheet(list: list)
+        }
         .alert("Not a git repository", isPresented: Binding(get: { !list.rejectedFolders.isEmpty },
                                                             set: { if !$0 { list.rejectedFolders = [] } })) {
             Button("OK") {}

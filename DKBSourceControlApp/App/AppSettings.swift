@@ -11,6 +11,7 @@ enum AppSettings {
     static let diffContextKey = "diffContext"
     static let diffIgnoresWhitespaceKey = "diffIgnoresWhitespace"
     static let fileListLayoutKey = "fileListLayout"
+    static let cloneParentFolderKey = "cloneParentFolder"
 
     /// `/usr/bin/git` unless the user chose another one; read at launch.
     static var gitPath: String {

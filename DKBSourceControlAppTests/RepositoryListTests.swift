@@ -65,4 +65,33 @@ import Testing
         #expect(model.status == nil)
         #expect(model.refreshError != nil)
     }
+
+    @Test func cloneListsSelectsAndLogsTheNewRepository() async throws {
+        let remote = try await makeFolder(repository: true)
+        _ = try await git.run(["-c", "user.name=Test", "-c", "user.email=test@example.com", "-c", "commit.gpgsign=false",
+                               "commit", "--allow-empty", "-q", "-m", "one"], in: remote)
+        let parent = try await makeFolder(repository: false)
+        // Selecting writes the app's real defaults: put them back.
+        let selected = UserDefaults.standard.string(forKey: AppSettings.lastSelectedRepositoryKey)
+        defer {
+            [remote, parent].forEach { try? FileManager.default.removeItem(at: $0) }
+            UserDefaults.standard.set(selected, forKey: AppSettings.lastSelectedRepositoryKey)
+        }
+        let list = RepositoryList(database: try AppDatabase.inMemory(), git: git)
+
+        let destination = parent.appendingPathComponent("copy", isDirectory: true)
+        try await list.clone(remote.path, into: destination)
+        try await waitForModels(list, count: 1)
+        let model = try #require(list.models.first)
+        #expect(model.record.path == destination.path)
+        #expect(list.selection == .repository(model.id))
+        #expect(list.log.entries.first?.succeeded == true)
+
+        await #expect(throws: GitCommandError.self) {
+            try await list.clone(parent.appendingPathComponent("nothing").path, into: parent.appendingPathComponent("other"))
+        }
+        #expect(list.log.entries.first?.succeeded == false)
+        #expect(!FileManager.default.fileExists(atPath: parent.appendingPathComponent("other").path))
+        try await waitForModels(list, count: 1)
+    }
 }

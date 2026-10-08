@@ -24,6 +24,7 @@ final class RepositoryList {
     /// Folder names that were added but aren't git repositories.
     var rejectedFolders: [String] = []
     var isScanSheetPresented = false
+    var isCloneSheetPresented = false
     let log = OperationLog()
 
     @ObservationIgnored let store: RepositoryStore
@@ -113,6 +114,20 @@ final class RepositoryList {
         guard panel.runModal() == .OK else { return }
         let urls = panel.urls
         Task { await add(urls) }
+    }
+
+    /// Clones into `destination`, logs it like a push, then lists and
+    /// selects the new repository. Cancelling the task stops git, which
+    /// removes the folder it made.
+    func clone(_ url: String, into destination: URL) async throws {
+        let entry = log.start(repository: destination.lastPathComponent, command: "git clone \(url) \(destination.path)")
+        do {
+            log.finish(entry, output: try await GitRepository.clone(url, into: destination, git: git))
+        } catch {
+            log.fail(entry, error: error)
+            throw error
+        }
+        await add([destination])
     }
 
     func rename(_ model: RepositoryModel, to name: String) {

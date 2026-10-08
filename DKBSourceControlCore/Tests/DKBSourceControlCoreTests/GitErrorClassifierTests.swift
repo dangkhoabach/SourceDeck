@@ -26,6 +26,10 @@ import Testing
         ("ssh: Could not resolve hostname nothing.invalid: nodename nor servname provided, or not known\nfatal: Could not read from remote repository.",
          .networkUnreachable),
         ("You are not currently on a branch.\nPlease specify which branch you want to merge with.", .detachedHead),
+        ("remote: Repository not found.\nfatal: repository 'https://github.com/o/missing.git/' not found", .repositoryNotFound),
+        ("fatal: repository '/nonexistent/repo' does not exist", .repositoryNotFound),
+        ("Host key verification failed.\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists.",
+         .hostKeyUnverified),
         ("error: pathspec 'x' did not match any file(s) known to git", .other),
     ])
     func classifies(output: String, kind: GitCommandError.Kind) {

@@ -404,4 +404,63 @@ import Testing
         #expect(head.ahead == 0 && head.behind == 0)
         #expect(try await mine.repository.log().map(\.message).prefix(2) == ["mine 3", "theirs 2"])
     }
+
+    @Test func cloneChecksOutTheDefaultBranchTrackingOrigin() async throws {
+        let remote = try await TempRepository(bare: true)
+        let mine = try await TempRepository()
+        try await mine.run("remote", "add", "origin", remote.url.path)
+        try mine.write("a.txt", "1\n")
+        try await mine.commitAll("one")
+        _ = try await mine.repository.push(setUpstream: "main")
+
+        let destination = TempRepository.tempRoot.appendingPathComponent("dkbsc-clone-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: destination) }
+        _ = try await GitRepository.clone(remote.url.path, into: destination, git: mine.git)
+        let clone = try await GitRepository.open(destination, git: mine.git)
+        #expect(clone.root.path == destination.path)
+        let head = try await clone.status().head
+        #expect(head.branch == "main" && head.upstream == "origin/main" && head.ahead == 0)
+        #expect(try await clone.log().map(\.message) == ["one"])
+    }
+
+    @Test(arguments: [
+        ("https://github.com/dangkhoabach/DKB-Source-Control.git", "DKB-Source-Control"),
+        ("https://github.com/o/repo", "repo"),
+        ("https://github.com/o/repo/", "repo"),
+        ("git@github.com:o/repo.git", "repo"),
+        ("git@host:repo.git", "repo"),
+        ("ssh://git@host:22/o/repo.git/", "repo"),
+        ("/Users/x/remote.git", "remote"),
+        ("  https://github.com/o/repo.git\n", "repo"),
+        ("", ""),
+    ])
+    func cloneFolderName(url: String, name: String) {
+        #expect(GitRepository.cloneFolderName(for: url) == name)
+    }
+
+    @Test func failedCloneLeavesNothingBehind() async throws {
+        let git = GitProcess(environment: GitEnvironment())
+        let destination = TempRepository.tempRoot.appendingPathComponent("dkbsc-clone-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: destination) }
+        await #expect { try await GitRepository.clone("/nonexistent/dkbsc-repo", into: destination, git: git) } throws: { error in
+            (error as? GitCommandError)?.kind == .repositoryNotFound
+        }
+        #expect(!FileManager.default.fileExists(atPath: destination.path))
+
+        // A URL that looks like an option is still only a URL.
+        let marker = TempRepository.tempRoot.appendingPathComponent("dkbsc-marker-\(UUID().uuidString)")
+        await #expect(throws: GitCommandError.self) {
+            try await GitRepository.clone("--upload-pack=touch \(marker.path)", into: destination, git: git)
+        }
+        #expect(!FileManager.default.fileExists(atPath: marker.path))
+
+        // A folder that already has files is refused, and keeps them.
+        let remote = try await TempRepository(bare: true)
+        let existing = try await TempRepository()
+        try existing.write("keep.txt", "x")
+        await #expect(throws: GitCommandError.self) {
+            try await GitRepository.clone(remote.url.path, into: existing.url, git: git)
+        }
+        #expect(try existing.read("keep.txt") == "x")
+    }
 }
