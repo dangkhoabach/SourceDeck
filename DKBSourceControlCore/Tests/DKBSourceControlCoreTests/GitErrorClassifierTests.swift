@@ -20,6 +20,12 @@ import Testing
         ("fatal: not a git repository (or any of the parent directories): .git", .notARepository),
         ("fatal: 'origin' does not appear to be a git repository\nfatal: Could not read from remote repository.", .remoteNotFound),
         ("There is no tracking information for the current branch.\nPlease specify which branch you want to merge with.", .noUpstream),
+        ("fatal: unable to access 'http://127.0.0.1:9/x.git/': Failed to connect to 127.0.0.1 port 9 after 0 ms: Couldn't connect to server",
+         .networkUnreachable),
+        ("fatal: unable to access 'https://nothing.invalid/x.git/': Could not resolve host: nothing.invalid", .networkUnreachable),
+        ("ssh: Could not resolve hostname nothing.invalid: nodename nor servname provided, or not known\nfatal: Could not read from remote repository.",
+         .networkUnreachable),
+        ("You are not currently on a branch.\nPlease specify which branch you want to merge with.", .detachedHead),
         ("error: pathspec 'x' did not match any file(s) known to git", .other),
     ])
     func classifies(output: String, kind: GitCommandError.Kind) {

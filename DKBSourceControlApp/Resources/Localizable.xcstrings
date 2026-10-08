@@ -550,6 +550,16 @@
         }
       }
     },
+    "Commit the staged changes" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Commit các thay đổi đã stage"
+          }
+        }
+      }
+    },
     "Commit the staged changes (⌘⏎), or commit and push (⇧⌘⏎)" : {
       "localizations" : {
         "vi" : {
@@ -1143,10 +1153,10 @@
         }
       }
     },
-    "Git" : {
+    "git" : {
       "shouldTranslate" : false
     },
-    "git" : {
+    "Git" : {
       "shouldTranslate" : false
     },
     "git %@" : {
@@ -1248,6 +1258,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Khoá API Google"
+          }
+        }
+      }
+    },
+    "HEAD isn't on a branch. Switch to a branch in Branches first." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HEAD không nằm trên branch nào. Hãy chuyển sang một branch trong tab Branch trước."
           }
         }
       }
@@ -1728,6 +1748,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "chưa publish"
+          }
+        }
+      }
+    },
+    "Not staged" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chưa stage"
           }
         }
       }
@@ -2758,6 +2788,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remote có commit mà bạn chưa có. Hãy pull trước rồi push."
+          }
+        }
+      }
+    },
+    "The remote's server can't be reached. Check the network connection, then try again." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Không kết nối được tới server của remote. Hãy kiểm tra kết nối mạng rồi thử lại."
           }
         }
       }

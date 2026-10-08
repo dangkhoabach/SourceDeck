@@ -141,6 +141,45 @@ import Testing
         #expect(model.status?.entries.map(\.path) == ["a.txt"])
     }
 
+    /// A repository straight from `git init`: no HEAD to diff, unstage or
+    /// amend against until the first commit.
+    @Test func theFirstCommitOfANewRepository() async throws {
+        let (model, url, _) = try await makeModel()
+        defer { try? FileManager.default.removeItem(at: url) }
+        try write("hello\n", to: "README.md", in: url)
+        await model.refresh()
+        #expect(model.status?.head.isUnborn == true)
+        await model.composer.checkAmend()
+        #expect(!model.composer.canAmend)
+        await model.history.reload()
+        #expect(model.history.commits.isEmpty && model.history.loadError == nil)
+
+        await model.workingCopy.stage(model.workingCopy.entries(.unstaged))
+        model.composer.draft = CommitDraft(keyword: .initial, lines: [.init(text: "Start")])
+        await model.composer.commit(push: false)
+        #expect(model.operationError == nil)
+        #expect(model.status?.head.isUnborn == false && model.status?.isClean == true)
+        await model.history.reload()
+        #expect(model.history.commits.map(\.message) == ["+ Initial +\n - Start"])
+    }
+
+    @Test func trashServiceMovesFilesAndSkipsMissingOnes() throws {
+        let root = URL(fileURLWithPath: realpath(NSTemporaryDirectory(), nil).map { String(cString: $0) } ?? NSTemporaryDirectory())
+        let name = "dkbsc-test-trash-\(UUID().uuidString).txt"
+        try Data("x".utf8).write(to: root.appendingPathComponent(name))
+        try TrashService.moveToTrash([name, "dkbsc-test-missing.txt"], in: root)
+        #expect(!FileManager.default.fileExists(atPath: root.appendingPathComponent(name).path))
+    }
+
+    @Test func externalAppsAreInstalledCandidatesOnly() {
+        let installed = ExternalApp.installed
+        #expect(Set(installed.map(\.bundleID)).isSubset(of: ExternalApp.candidates))
+        #expect(Set(installed.map(\.id)).count == installed.count)
+        // Terminal ships with macOS.
+        #expect(installed.contains { $0.bundleID == "com.apple.Terminal" })
+        #expect(installed.allSatisfy { FileManager.default.fileExists(atPath: $0.url.path) && !$0.name.hasSuffix(".app") })
+    }
+
     @Test func theDraftOutlivesTheComposer() async throws {
         let (model, url, drafts) = try await makeModel()
         defer { try? FileManager.default.removeItem(at: url) }

@@ -12,7 +12,7 @@ final class OperationLog {
         let id = UUID()
         let repository: String
         let command: String
-        let started = Date()
+        var started = Date()
         var finished: Date?
         var output = ""
         /// nil while running.
@@ -24,8 +24,10 @@ final class OperationLog {
     private(set) var entries: [Entry] = []
     static let limit = 200
 
-    func start(repository: String, command: String) -> Entry.ID {
-        entries.insert(Entry(repository: repository, command: command), at: 0)
+    /// - Parameter started: when the command began, for one logged only
+    ///   once it has failed.
+    func start(repository: String, command: String, started: Date = Date()) -> Entry.ID {
+        entries.insert(Entry(repository: repository, command: command, started: started), at: 0)
         if entries.count > Self.limit { entries.removeLast() }
         return entries[0].id
     }
@@ -58,8 +60,10 @@ enum GitErrorText {
         case let error as GitCommandError:
             switch error.kind {
             case .authenticationFailed: "git couldn't sign in to the remote. Check the credentials saved in Keychain or your SSH key."
+            case .networkUnreachable: "The remote's server can't be reached. Check the network connection, then try again."
             case .remoteNotFound: "The remote can't be reached: there is no remote named origin, or its address is wrong."
             case .noUpstream: "This branch has no upstream yet. Push it once to publish it."
+            case .detachedHead: "HEAD isn't on a branch. Switch to a branch in Branches first."
             case .indexLocked: "Another git process is using this repository. Wait for it to finish, then try again."
             case .nonFastForward: "The remote has commits you don't have yet. Pull first, then push."
             case .remoteRejected: "The server refused the push, for example a protected branch."

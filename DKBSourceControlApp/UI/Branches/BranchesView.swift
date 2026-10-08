@@ -31,7 +31,8 @@ struct BranchesView: View {
                 } label: {
                     Label("Stash Changes…", systemImage: "tray.and.arrow.down")
                 }
-                .disabled(branches.model.status?.isClean != false)
+                // git can't stash before the first commit.
+                .disabled(branches.model.status?.isClean != false || branches.model.status?.head.isUnborn == true)
                 .help("Put every change, untracked files too, aside in a stash")
                 Spacer()
             }
@@ -81,6 +82,10 @@ struct BranchesView: View {
     private var list: some View {
         List(selection: $selection) {
             Section("Local") {
+                // A branch with no commit yet has no ref to list.
+                if let head = branches.model.status?.head, head.isUnborn {
+                    BranchLabel(head: head).foregroundStyle(.secondary)
+                }
                 ForEach(branches.local) { branch in
                     BranchRow(branch: branch)
                         .tag(branch.id)

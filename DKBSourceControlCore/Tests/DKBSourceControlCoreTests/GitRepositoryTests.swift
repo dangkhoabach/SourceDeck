@@ -285,6 +285,50 @@ import Testing
 
     /// Ten stage calls at once: without the write queue some would fail on
     /// `index.lock`.
+    /// `.git` is a file pointing elsewhere (`init --separate-git-dir`, as
+    /// submodules and linked work trees have): everything still works off
+    /// the real git directory.
+    @Test func gitDirectoryElsewhere() async throws {
+        let base = TempRepository.tempRoot.appendingPathComponent("dkbsc-sep-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: base) }
+        let git = GitProcess(environment: GitEnvironment())
+        try FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
+        _ = try await git.run(["init", "-q", "-b", "main", "--separate-git-dir", base.appendingPathComponent("meta.git").path, "work"], in: base)
+        let work = base.appendingPathComponent("work")
+        let repository = try await GitRepository.open(work, git: git)
+        #expect(repository.root.path == work.path)
+        let gitDirectory = try await repository.gitDirectory()
+        #expect(gitDirectory.path == base.appendingPathComponent("meta.git").path)
+        try Data("a\n".utf8).write(to: work.appendingPathComponent("a.txt"))
+        #expect(try await repository.status().entries.map(\.path) == ["a.txt"])
+        try Data().write(to: gitDirectory.appendingPathComponent("MERGE_HEAD"))
+        #expect(try await repository.status().state == .merging)
+        let filter = WatchFilter(root: work.path, gitDirectory: gitDirectory.path, ignoredDirectories: [])
+        #expect(!filter.isRelevant([gitDirectory.appendingPathComponent("objects/ab").path]))
+        #expect(filter.isRelevant([gitDirectory.path]))
+    }
+
+    /// Plan R6: a lock released meanwhile is waited out; one that stays is reported.
+    @Test func aLockedIndexIsTriedOnceMore() async throws {
+        let repo = try await TempRepository()
+        try repo.write("a.txt", "a\n")
+        let lock = repo.url.appendingPathComponent(".git/index.lock")
+        try Data().write(to: lock)
+        Task {
+            try await Task.sleep(for: .milliseconds(100))
+            try FileManager.default.removeItem(at: lock)
+        }
+        _ = try await repo.repository.stage(["a.txt"])
+        #expect(try await repo.repository.status().stagedCount == 1)
+
+        try Data().write(to: lock)
+        let started = ContinuousClock.now
+        await #expect { try await repo.repository.unstage(["a.txt"]) } throws: { error in
+            (error as? GitCommandError)?.kind == .indexLocked
+        }
+        #expect(ContinuousClock.now - started >= GitRepository.lockRetryDelay)
+    }
+
     @Test func concurrentWritesRunOneAtATime() async throws {
         let repo = try await TempRepository()
         for i in 0..<10 { try repo.write("f\(i).txt", "\(i)\n") }

@@ -162,6 +162,7 @@ final class RepositoryModel: Identifiable {
     @discardableResult
     func write(_ command: String, logsSuccess: Bool = false, _ body: () async throws -> OperationOutput) async -> Bool {
         writesInFlight += 1
+        let started = Date()
         let entry = logsSuccess ? log.start(repository: record.name, command: command) : nil
         var succeeded = false
         do {
@@ -170,7 +171,7 @@ final class RepositoryModel: Identifiable {
             operationError = nil
             succeeded = true
         } catch {
-            log.fail(entry ?? log.start(repository: record.name, command: command), error: error)
+            log.fail(entry ?? log.start(repository: record.name, command: command, started: started), error: error)
             operationError = error
         }
         writesInFlight -= 1

@@ -64,6 +64,7 @@ public actor GitRepository {
 
     static let localTimeout = Duration.seconds(30)
     static let networkTimeout = Duration.seconds(120)
+    static let lockRetryDelay = Duration.milliseconds(300)
     /// Fixed so the user's diff config can't change what the parser and
     /// `git apply` see: prefixes, colour, external tools, text conversion.
     /// Context and whitespace come from `DiffOptions`.
@@ -304,11 +305,21 @@ public actor GitRepository {
 
     /// Queued behind every write asked for before it. The queue is set up
     /// before the first `await`, so call order is run order.
+    ///
+    /// Another tool (Sourcetree, VS Code) holding `index.lock` usually lets
+    /// go within moments, so a locked index is tried once more after
+    /// `lockRetryDelay` (plan R6). git checks the lock before changing
+    /// anything, so the first attempt left nothing half done.
     private func write(_ arguments: [String], stdin: Data? = nil, timeout: Duration = localTimeout) async throws -> OperationOutput {
         let previous = writeQueue
         let operation = Task {
             await previous?.value
-            return try await self.run(arguments, stdin: stdin, readOnly: false, timeout: timeout)
+            do {
+                return try await self.run(arguments, stdin: stdin, readOnly: false, timeout: timeout)
+            } catch let error as GitCommandError where error.kind == .indexLocked {
+                try await Task.sleep(for: Self.lockRetryDelay)
+                return try await self.run(arguments, stdin: stdin, readOnly: false, timeout: timeout)
+            }
         }
         writeQueue = Task { _ = try? await operation.value }
         let result = try await operation.value

@@ -117,6 +117,8 @@ struct CommitComposerView: View {
             .tint(disabled ? .gray : nil)
             .disabled(disabled)
             .help("Commit the staged changes (⌘⏎), or commit and push (⇧⌘⏎)")
+            // The same reason the screen shows under the message.
+            .accessibilityHint(composer.blockers.first.map { Text(CommitIssues.text($0)) } ?? Text("Commit the staged changes"))
         }
         .toggleStyle(.checkbox)
         .lineLimit(1)

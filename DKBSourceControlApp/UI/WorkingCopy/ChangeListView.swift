@@ -218,6 +218,19 @@ private struct ChangeRow: View {
             }
         }
         .listRowBackground(sensitive ? Color.red.opacity(0.1) : nil)
+        // VoiceOver reads one element per file: what changed, where, and
+        // whether it is staged, with Stage or Unstage as its action.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(StatusLetter(change: change).description) + Text(verbatim: ", " + entry.path + ", ") + stagedText)
+        .accessibilityAction(named: area == .staged ? Text("Unstage") : Text("Stage")) { if area != .conflicted { toggle() } }
+    }
+
+    private var stagedText: Text {
+        switch area {
+        case .staged: Text("Staged")
+        case .unstaged: Text("Not staged")
+        case .conflicted: Text("Conflicted")
+        }
     }
 
     private var change: FileChange {
@@ -277,7 +290,7 @@ struct StatusLetter: View {
         }
     }
 
-    private var description: LocalizedStringKey {
+    var description: LocalizedStringKey {
         switch change {
         case .added: "Added"
         case .modified: "Modified"

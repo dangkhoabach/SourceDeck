@@ -5,6 +5,11 @@ import AppKit
 /// on quit.
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    /// One main window (plan D4): no window tabs, so View has no tab items.
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        NSWindow.allowsAutomaticWindowTabbing = false
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         ThemePreference.apply()
         Task { await AppServices.shared.start() }

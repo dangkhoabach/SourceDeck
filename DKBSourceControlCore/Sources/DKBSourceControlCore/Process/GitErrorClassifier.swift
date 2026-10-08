@@ -5,10 +5,14 @@ import Foundation
 public struct GitCommandError: Error, Sendable, Equatable {
     public enum Kind: Sendable, Equatable {
         case authenticationFailed
+        /// No network, or the remote's host can't be resolved or reached.
+        case networkUnreachable
         /// No remote of that name, or its address leads nowhere.
         case remoteNotFound
         /// Pull on a branch that was never published.
         case noUpstream
+        /// Pull or push with HEAD on no branch.
+        case detachedHead
         case indexLocked
         /// Push refused: the remote has commits this branch doesn't.
         case nonFastForward
@@ -46,10 +50,13 @@ public struct GitCommandError: Error, Sendable, Equatable {
 enum GitErrorClassifier {
     private static let rules: [(GitCommandError.Kind, [String])] = [
         (.notARepository, ["not a git repository"]),
+        (.networkUnreachable, ["Could not resolve host", "Couldn't connect to server", "Failed to connect to",
+                               "Connection timed out", "Operation timed out", "Network is unreachable", "Connection refused"]),
         (.authenticationFailed, ["could not read Username", "could not read Password", "Authentication failed",
                                  "Permission denied (publickey", "terminal prompts disabled", "Invalid username or token"]),
         (.remoteNotFound, ["does not appear to be a git repository"]),
         (.noUpstream, ["There is no tracking information"]),
+        (.detachedHead, ["You are not currently on a branch"]),
         (.indexLocked, ["index.lock': File exists"]),
         (.remoteRejected, ["[remote rejected]", "hook declined"]),
         (.nonFastForward, ["(fetch first)", "(non-fast-forward)", "Updates were rejected because"]),

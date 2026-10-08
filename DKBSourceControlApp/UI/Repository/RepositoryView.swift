@@ -99,7 +99,10 @@ struct RepositoryView: View {
             }
         }
         .keyboardShortcut(key, modifiers: [.command, .shift])
-        .disabled(model.runningOperation != nil || model.status == nil)
-        .help(help)
+        // Pull and push need a branch; git's own message for a detached HEAD says little.
+        .disabled(model.runningOperation != nil || model.status == nil
+                  || (operation != .fetch && model.status?.head.isDetached == true))
+        .help(operation != .fetch && model.status?.head.isDetached == true
+              ? "HEAD isn't on a branch. Switch to a branch in Branches first." : help)
     }
 }
