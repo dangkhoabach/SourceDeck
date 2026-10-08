@@ -1,0 +1,6 @@
+// Copy to Local.xcconfig (gitignored). Either:
+//   CODE_SIGN_IDENTITY = -                             // ad-hoc: works, but the identity
+//                                                      // changes every build (TCC re-prompts)
+//   CODE_SIGN_IDENTITY = DKB Source Control Local Signing   // stable self-signed cert,
+//                                                      // created by scripts/create-signing-cert.sh
+CODE_SIGN_IDENTITY = -
