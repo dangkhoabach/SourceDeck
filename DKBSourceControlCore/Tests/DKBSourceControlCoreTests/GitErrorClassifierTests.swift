@@ -36,6 +36,32 @@ import Testing
         #expect(GitErrorClassifier.classify(output) == kind)
     }
 
+    /// The address git asked an account for, from its three messages.
+    @Test(arguments: [
+        ("fatal: could not read Username for 'https://git.example.com:3000': terminal prompts disabled", "https://git.example.com:3000"),
+        ("fatal: could not read Password for 'http://alice@127.0.0.1:55861': terminal prompts disabled", "http://alice@127.0.0.1:55861"),
+        ("fatal: Authentication failed for 'http://127.0.0.1:55872/repo.git/'", "http://127.0.0.1:55872/repo.git/"),
+        ("remote: Invalid username or token. Password authentication is not supported for Git operations.\nfatal: Authentication failed for 'https://github.com/o/r.git/'",
+         "https://github.com/o/r.git/"),
+    ])
+    func credentialURL(output: String, url: String) {
+        let error = GitCommandError(arguments: ["push"], result: GitResult(exitCode: 128, stdout: Data(), stderr: output))
+        #expect(error.credentialURL == url)
+        #expect(error.needsSignIn)
+    }
+
+    /// SSH has no account to type in; a URL in another message is not one git asked about.
+    @Test(arguments: [
+        "git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.",
+        "fatal: could not read Username for 'ssh://git@host/x.git': terminal prompts disabled",
+        "fatal: unable to access 'https://nothing.invalid/x.git/': Could not resolve host: nothing.invalid",
+    ])
+    func noSignInWithoutAnHTTPAddress(output: String) {
+        let error = GitCommandError(arguments: ["push"], result: GitResult(exitCode: 128, stdout: Data(), stderr: output))
+        #expect(error.credentialURL == nil)
+        #expect(!error.needsSignIn)
+    }
+
     /// `git merge` prints CONFLICT on stdout, not stderr.
     @Test func stdoutIsPartOfTheOutput() {
         let result = GitResult(exitCode: 1, stdout: Data("CONFLICT (content): Merge conflict in f\n".utf8), stderr: "")

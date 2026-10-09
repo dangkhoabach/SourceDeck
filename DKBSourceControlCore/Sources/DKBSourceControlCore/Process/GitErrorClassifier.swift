@@ -39,6 +39,12 @@ public struct GitCommandError: Error, Sendable, Equatable {
     public let exitCode: Int32
     /// stderr, then stdout when it has anything (merge prints CONFLICT there).
     public let output: String
+    /// The HTTP(S) address git asked an account for, as git wrote it: no
+    /// account saved yet, or the saved one was refused. nil for SSH.
+    public let credentialURL: String?
+
+    /// git stopped for an account the user can type in (plan: remote sign-in).
+    public var needsSignIn: Bool { kind == .authenticationFailed && credentialURL != nil }
 
     init(arguments: [String], result: GitResult) {
         let stdout = result.stdoutText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -47,6 +53,7 @@ public struct GitCommandError: Error, Sendable, Equatable {
         exitCode = result.exitCode
         output = [stderr, stdout].filter { !$0.isEmpty }.joined(separator: "\n")
         kind = GitErrorClassifier.classify(output)
+        credentialURL = kind == .authenticationFailed ? GitErrorClassifier.credentialURL(in: output) : nil
     }
 }
 
@@ -77,5 +84,19 @@ enum GitErrorClassifier {
 
     static func classify(_ output: String) -> GitCommandError.Kind {
         rules.first { _, patterns in patterns.contains { output.contains($0) } }?.0 ?? .other
+    }
+
+    /// From "could not read Username for '<url>'" (nothing saved),
+    /// "could not read Password for '<url>'" (the URL names the user) and
+    /// "Authentication failed for '<url>'" (the saved account was refused;
+    /// git has already removed it). Taken from git's words rather than the
+    /// remote's configured URL, so `insteadOf`, `pushurl` and a clone's URL
+    /// are already applied.
+    static func credentialURL(in output: String) -> String? {
+        let pattern = #/(?:could not read (?:Username|Password) for|Authentication failed for) '([^']+)'/#
+        guard let match = output.firstMatch(of: pattern) else { return nil }
+        let url = String(match.1)
+        guard let scheme = URLComponents(string: url)?.scheme?.lowercased(), scheme == "https" || scheme == "http" else { return nil }
+        return url
     }
 }

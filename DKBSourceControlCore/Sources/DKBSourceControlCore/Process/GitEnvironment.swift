@@ -23,14 +23,20 @@ public struct GitEnvironment: Sendable, Equatable {
     public let pathSource: PathSource
     let home: String
     let sshAuthSock: String?
+    /// Added last to every git process. Tests point git at a throwaway
+    /// config this way (`GIT_CONFIG_NOSYSTEM`, `GIT_CONFIG_GLOBAL`), so
+    /// nothing they sign in with reaches the Keychain.
+    let extraVariables: [String: String]
 
     public init(gitPath: String = defaultGitPath, path: String = fallbackPath, pathSource: PathSource = .fallback,
-                home: String = NSHomeDirectory(), sshAuthSock: String? = ProcessInfo.processInfo.environment["SSH_AUTH_SOCK"]) {
+                home: String = NSHomeDirectory(), sshAuthSock: String? = ProcessInfo.processInfo.environment["SSH_AUTH_SOCK"],
+                extraVariables: [String: String] = [:]) {
         gitURL = URL(fileURLWithPath: gitPath)
         self.path = path
         self.pathSource = pathSource
         self.home = home
         self.sshAuthSock = sshAuthSock
+        self.extraVariables = extraVariables
     }
 
     /// An app started from Finder inherits launchd's minimal PATH, not the
@@ -59,6 +65,7 @@ public struct GitEnvironment: Sendable, Equatable {
         ]
         if readOnly { env["GIT_OPTIONAL_LOCKS"] = "0" }
         if let sshAuthSock { env["SSH_AUTH_SOCK"] = sshAuthSock }
+        env.merge(extraVariables) { _, extra in extra }
         return env
     }
 
