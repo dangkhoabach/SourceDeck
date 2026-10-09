@@ -41,6 +41,8 @@ final class RepositoryModel: Identifiable {
     /// A branch with no upstream, waiting for the user to confirm its first
     /// push (plan D14).
     var pendingPublish: String?
+    /// git stopped for an account: the Sign In sheet shown for it.
+    var pendingSignIn: RemoteSignIn.Request?
     var tab: Tab = .workingCopy
     @ObservationIgnored private var remoteLoaded = false
     @ObservationIgnored private var refreshAgain = false
@@ -50,6 +52,10 @@ final class RepositoryModel: Identifiable {
     @ObservationIgnored private var lastWatchRefresh = ContinuousClock.now - .seconds(1)
     @ObservationIgnored private let log: OperationLog
     @ObservationIgnored let drafts: CommitDraftStore
+    @ObservationIgnored let signIn: RemoteSignIn?
+    /// The remote operation that last failed for want of an account, run
+    /// again by "Sign In…" on the banner.
+    @ObservationIgnored private var failedForAccount: (operation: RemoteOperation, setUpstream: String?)?
     /// Kept per repository, so the selection and the half-written message
     /// are still there after looking at another one.
     @ObservationIgnored private(set) lazy var workingCopy = WorkingCopyModel(model: self)
@@ -70,12 +76,13 @@ final class RepositoryModel: Identifiable {
     nonisolated let id: String
     var folderExists: Bool { FileManager.default.fileExists(atPath: record.path) }
 
-    init(record: RepositoryRecord, git: GitProcess, log: OperationLog, drafts: CommitDraftStore) {
+    init(record: RepositoryRecord, git: GitProcess, log: OperationLog, drafts: CommitDraftStore, signIn: RemoteSignIn? = nil) {
         self.record = record
         id = record.id
         repository = GitRepository(root: record.url, git: git)
         self.log = log
         self.drafts = drafts
+        self.signIn = signIn
     }
 
     func update(_ record: RepositoryRecord) {
@@ -130,9 +137,13 @@ final class RepositoryModel: Identifiable {
         operationError = nil
     }
 
-    /// - Parameter setUpstream: for a push, the branch to publish when it
-    ///   has no upstream yet.
-    func run(_ operation: RemoteOperation, setUpstream: String? = nil) async {
+    /// - Parameters:
+    ///   - setUpstream: for a push, the branch to publish when it has no
+    ///     upstream yet.
+    ///   - interactive: the user asked for it, so a missing account opens
+    ///     the Sign In sheet. Fetch All and the automatic fetch only leave
+    ///     the banner, with its "Sign In…".
+    func run(_ operation: RemoteOperation, setUpstream: String? = nil, interactive: Bool = true) async {
         guard runningOperation == nil else { return }
         runningOperation = operation
         await write(operation.command, logsSuccess: true) { [repository] in
@@ -143,6 +154,19 @@ final class RepositoryModel: Identifiable {
             }
         }
         runningOperation = nil
+        failedForAccount = (operationError as? GitCommandError)?.needsSignIn == true ? (operation, setUpstream) : nil
+        if interactive { await askToSignIn() }
+    }
+
+    /// Opens the Sign In sheet for the operation that failed for want of an
+    /// account; signed in, it runs again. Nothing happens for other errors.
+    func askToSignIn() async {
+        guard pendingSignIn == nil, let failed = failedForAccount, let error = operationError, let signIn else { return }
+        pendingSignIn = await signIn.request(for: error, in: record.url) { [weak self] in
+            guard let self else { return nil }
+            await run(failed.operation, setUpstream: failed.setUpstream, interactive: false)
+            return operationError
+        }
     }
 
     /// Push, asking first when the branch was never published (plan D14).

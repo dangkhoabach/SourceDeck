@@ -50,6 +50,13 @@ is in [`docs/dkb-source-control-build-plan.md`](docs/dkb-source-control-build-pl
 - **Fetch, Pull, Push** with git's own output in a log (⌥⌘L) and a one-line
   explanation of each failure. A branch that was never published asks before
   its first push.
+- **Sign In** when an HTTPS remote wants an account: push, pull, fetch or
+  clone asks for a username and a password or access token, hands them to
+  git's credential helper (the Keychain), and runs again. A wrong password is
+  asked for again; Fetch All and the automatic fetch never ask, and one
+  sign-in fetches the other repositories waiting on the same host.
+  **Settings › Accounts** lists the HTTPS hosts of your repositories, who is
+  signed in to each, with Sign In and Sign Out.
 - English and Vietnamese, light and dark.
 
 ![History with a commit's message, files and diff](docs/screenshots/history.png)
@@ -66,7 +73,10 @@ Terminal and the installed editors.
 - No force push, no hard reset, no `git clean`, no `branch -D`; the app never
   edits `.gitconfig` and never commits, pushes or creates a branch on its own.
 - Hooks run on every commit (`--no-verify` is never used).
-- git never prompts: missing credentials fail at once with git's own message.
+- git never prompts: missing credentials fail at once with git's own message,
+  and the app asks instead (HTTPS). The account goes to git's own credential
+  helper on its stdin, the way Terminal saves one; the app keeps no copy and
+  never logs the password. SSH keys and passphrases stay with ssh and its agent.
 - A lock left by another git process is waited out once (300 ms) before it is
   reported.
 

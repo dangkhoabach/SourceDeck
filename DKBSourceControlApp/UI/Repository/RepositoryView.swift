@@ -11,7 +11,8 @@ struct RepositoryView: View {
     var body: some View {
         VStack(spacing: 0) {
             if let error = model.operationError {
-                GitErrorBanner(error: error, showLog: { showsLog = true }, dismiss: model.dismissOperationError)
+                GitErrorBanner(error: error, signIn: { Task { await model.askToSignIn() } },
+                               showLog: { showsLog = true }, dismiss: model.dismissOperationError)
                     .padding([.horizontal, .top], 12)
             }
             if !model.folderExists {
@@ -48,6 +49,11 @@ struct RepositoryView: View {
             }
         } message: {
             Text("The branch has no upstream yet. It will be pushed to origin and tracked from now on.")
+        }
+        .sheet(item: Bindable(model).pendingSignIn) { request in
+            if let signIn = model.signIn {
+                SignInSheet(request: request, signIn: signIn).environment(\.locale, AppLocale.current.locale)
+            }
         }
         .task(id: model.id) { await model.watchFileSystem() }
     }

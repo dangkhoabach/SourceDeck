@@ -30,6 +30,7 @@ final class RepositoryList {
     @ObservationIgnored let store: RepositoryStore
     @ObservationIgnored let drafts: CommitDraftStore
     @ObservationIgnored let git: GitProcess
+    @ObservationIgnored let signIn: RemoteSignIn
     @ObservationIgnored private var autoFetchTask: Task<Void, Never>?
 
     /// At most this many git processes at once (plan D12; PoC 0.1: 12
@@ -40,11 +41,16 @@ final class RepositoryList {
         store = RepositoryStore(dbQueue: database.dbQueue)
         drafts = CommitDraftStore(dbQueue: database.dbQueue)
         self.git = git
+        signIn = RemoteSignIn(git: git, log: log)
         if let id = UserDefaults.standard.string(forKey: AppSettings.lastSelectedRepositoryKey) {
             selection = .repository(id)
         }
         Task { await observeRecords() }
         scheduleAutoFetch(minutes: AppSettings.autoFetchMinutes)
+        signIn.onSignedIn = { [weak self] host in
+            guard let self else { return }
+            Task { await fetchWaiting(forAccountOn: host) }
+        }
     }
 
     var selectedModel: RepositoryModel? {
@@ -77,7 +83,7 @@ final class RepositoryList {
                 model.update(record)
                 return model
             }
-            let model = RepositoryModel(record: record, git: git, log: log, drafts: drafts)
+            let model = RepositoryModel(record: record, git: git, log: log, drafts: drafts, signIn: signIn)
             Task { await model.refresh() }
             return model
         }
@@ -153,11 +159,24 @@ final class RepositoryList {
         await forEachModel { await $0.refresh() }
     }
 
+    /// Never opens the Sign In sheet: a repository that needs an account
+    /// keeps its banner, with "Sign In…".
     func fetchAll() async {
         guard !isFetchingAll else { return }
         isFetchingAll = true
         defer { isFetchingAll = false }
-        await forEachModel { await $0.run(.fetch) }
+        await forEachModel { await $0.run(.fetch, interactive: false) }
+    }
+
+    /// Once an account for `host` is saved, the other repositories that
+    /// failed for want of it fetch again, so their banners go.
+    func fetchWaiting(forAccountOn host: String) async {
+        let waiting = models.filter { model in
+            guard let url = (model.operationError as? GitCommandError)?.credentialURL else { return false }
+            return RemoteSignIn.host(of: url) == host
+        }
+        // Usually one or two repositories: one after another is enough.
+        for model in waiting { await model.run(.fetch, interactive: false) }
     }
 
     /// 0 turns it off. Restarted whenever Settings changes the interval.

@@ -94,6 +94,8 @@ struct StateBadge: View {
 /// The plain-language hint above git's own message, with a way to the log.
 struct GitErrorBanner: View {
     let error: Error
+    /// Offered when git stopped for an account the user can type in.
+    var signIn: (() -> Void)?
     var showLog: (() -> Void)?
     var dismiss: (() -> Void)?
 
@@ -109,6 +111,7 @@ struct GitErrorBanner: View {
                     .textSelection(.enabled)
             }
             Spacer(minLength: 0)
+            if let signIn, (error as? GitCommandError)?.needsSignIn == true { Button("Sign In…", action: signIn) }
             if let showLog { Button("Show Log", action: showLog) }
             if let dismiss {
                 Button(action: dismiss) { Image(systemName: "xmark") }

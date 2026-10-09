@@ -60,6 +60,10 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
             }
 
+            if let list = services.repositories {
+                AccountsSection(list: list)
+            }
+
             Section("Git") {
                 switch services.git {
                 case .resolving:

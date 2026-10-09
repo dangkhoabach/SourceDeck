@@ -220,6 +220,20 @@ public actor GitRepository {
         return result.succeeded && !url.isEmpty ? RemoteURL(raw: url) : nil
     }
 
+    /// Every fetch and push address of every remote, once each, as
+    /// `git remote -v` shows them (`insteadOf` and `pushurl` applied): the
+    /// hosts Settings › Accounts lists.
+    public func remoteURLs() async throws -> [String] {
+        var urls: [String] = []
+        for line in try await run(["remote", "-v"], readOnly: true).stdoutText.split(separator: "\n") {
+            // "origin\thttps://host/repo.git (fetch)"
+            guard let tab = line.firstIndex(of: "\t"), let space = line.lastIndex(of: " "), space > tab else { continue }
+            let url = String(line[line.index(after: tab)..<space])
+            if !urls.contains(url) { urls.append(url) }
+        }
+        return urls
+    }
+
     // MARK: - Writes
 
     public func stage(_ paths: [String]) async throws -> OperationOutput {

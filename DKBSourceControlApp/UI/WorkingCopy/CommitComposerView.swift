@@ -31,7 +31,7 @@ struct CommitComposerView: View {
         }
         .padding(12)
         .sheet(isPresented: Binding(get: { !composer.findings.isEmpty }, set: { if !$0 { composer.findings = [] } })) {
-            SensitiveWarningSheet(composer: composer)
+            SensitiveWarningSheet(composer: composer).environment(\.locale, AppLocale.current.locale)
         }
         .alert("The message doesn't follow the format yet", isPresented: $composer.outlineSwitchFailed) {
             Button("OK") {}

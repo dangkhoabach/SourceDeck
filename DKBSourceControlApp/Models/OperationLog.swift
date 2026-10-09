@@ -59,7 +59,12 @@ enum GitErrorText {
         switch error {
         case let error as GitCommandError:
             switch error.kind {
-            case .authenticationFailed: "git couldn't sign in to the remote. Check the credentials saved in Keychain or your SSH key."
+            case .authenticationFailed:
+                if error.needsSignIn {
+                    "git needs an account for this remote. Sign in to continue."
+                } else {
+                    "git couldn't sign in to the remote. Check the credentials saved in Keychain or your SSH key."
+                }
             case .networkUnreachable: "The remote's server can't be reached. Check the network connection, then try again."
             case .remoteNotFound: "The remote can't be reached: there is no remote named origin, or its address is wrong."
             case .repositoryNotFound: "There is no repository at this address, or your account can't see it. Check the URL and your access."

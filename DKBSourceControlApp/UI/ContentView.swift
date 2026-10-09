@@ -61,10 +61,10 @@ private struct MainWindowView: View {
             }
         }
         .sheet(isPresented: $list.isScanSheetPresented) {
-            ScanFolderSheet(list: list)
+            ScanFolderSheet(list: list).environment(\.locale, AppLocale.current.locale)
         }
         .sheet(isPresented: $list.isCloneSheetPresented) {
-            CloneSheet(list: list)
+            CloneSheet(list: list).environment(\.locale, AppLocale.current.locale)
         }
         .alert("Not a git repository", isPresented: Binding(get: { !list.rejectedFolders.isEmpty },
                                                             set: { if !$0 { list.rejectedFolders = [] } })) {

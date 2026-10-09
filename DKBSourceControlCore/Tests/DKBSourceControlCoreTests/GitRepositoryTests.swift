@@ -348,6 +348,18 @@ import Testing
         try await repo.run("remote", "add", "origin", "https://github.com/dangkhoabach/MyWebsite.git")
         #expect(try await repo.repository.remoteURL()?.gitHubWebURL?.absoluteString == "https://github.com/dangkhoabach/MyWebsite")
     }
+
+    @Test func remoteURLsListEveryFetchAndPushAddressOnce() async throws {
+        let repo = try await TempRepository()
+        #expect(try await repo.repository.remoteURLs().isEmpty)
+        try await repo.run("remote", "add", "origin", "https://github.com/o/r.git")
+        try await repo.run("remote", "set-url", "--push", "origin", "https://push.example.test:3000/o/r.git")
+        try await repo.run("remote", "add", "upstream", "git@github.com:o/r.git")
+        try await repo.run("remote", "add", "local", "/Volumes/My Disk/r.git")
+        #expect(try await repo.repository.remoteURLs() == [
+            "/Volumes/My Disk/r.git", "https://github.com/o/r.git", "https://push.example.test:3000/o/r.git", "git@github.com:o/r.git",
+        ])
+    }
 }
 
 /// Push, fetch and pull against a bare repository on disk — no network.

@@ -220,6 +220,16 @@
         }
       }
     },
+    "Accounts" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tài khoản"
+          }
+        }
+      }
+    },
     "Add" : {
       "localizations" : {
         "vi" : {
@@ -780,6 +790,16 @@
         }
       }
     },
+    "Copy Command" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chép lệnh"
+          }
+        }
+      }
+    },
     "Copy Message" : {
       "localizations" : {
         "vi" : {
@@ -836,6 +856,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tạo tính năng mới"
+          }
+        }
+      }
+    },
+    "Create a Token…" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tạo token…"
           }
         }
       }
@@ -1362,6 +1392,36 @@
         }
       }
     },
+    "git has no credential helper to save the account in. Run this in Terminal once, then try again:" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "git chưa có nơi lưu tài khoản (credential helper). Chạy lệnh này một lần trong Terminal rồi thử lại:"
+          }
+        }
+      }
+    },
+    "git needs an account for %@." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "git cần tài khoản cho %@."
+          }
+        }
+      }
+    },
+    "git needs an account for this remote. Sign in to continue." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "git cần tài khoản cho remote này. Hãy đăng nhập để tiếp tục."
+          }
+        }
+      }
+    },
     "git not found" : {
       "localizations" : {
         "vi" : {
@@ -1398,6 +1458,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "git sử dụng"
+          }
+        }
+      }
+    },
+    "GitHub needs a personal access token, not your password." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GitHub cần personal access token, không nhận mật khẩu tài khoản."
           }
         }
       }
@@ -1892,6 +1962,16 @@
         }
       }
     },
+    "No repository in the list has an HTTPS remote." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chưa repo nào trong danh sách có remote HTTPS."
+          }
+        }
+      }
+    },
     "No stashes" : {
       "localizations" : {
         "vi" : {
@@ -1918,6 +1998,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "chưa publish"
+          }
+        }
+      }
+    },
+    "Not signed in" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chưa đăng nhập"
           }
         }
       }
@@ -2102,12 +2192,32 @@
         }
       }
     },
+    "Password" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mật khẩu"
+          }
+        }
+      }
+    },
     "Password in the code" : {
       "localizations" : {
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mật khẩu trong code"
+          }
+        }
+      }
+    },
+    "Password or access token" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mật khẩu hoặc access token"
           }
         }
       }
@@ -2392,6 +2502,16 @@
         }
       }
     },
+    "Remove the saved account for %@?" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xoá tài khoản đã lưu cho %@?"
+          }
+        }
+      }
+    },
     "Remove “%@” from the list?" : {
       "localizations" : {
         "vi" : {
@@ -2518,6 +2638,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rà soát và hoàn tất checklist, sẵn sàng deploy"
+          }
+        }
+      }
+    },
+    "Saved by git's credential helper (the Keychain on this Mac), the same as signing in from Terminal. DKB Source Control keeps no copy." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "git lưu bằng credential helper (Keychain trên máy này), giống như đăng nhập từ Terminal. DKB Source Control không giữ bản nào."
+          }
+        }
+      }
+    },
+    "Saved by git's credential helper and shared with Terminal." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "git lưu bằng credential helper, dùng chung với Terminal."
           }
         }
       }
@@ -2692,12 +2832,82 @@
         }
       }
     },
+    "Sign In" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đăng nhập"
+          }
+        }
+      }
+    },
+    "Sign In to %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đăng nhập vào %@"
+          }
+        }
+      }
+    },
+    "Sign In…" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đăng nhập…"
+          }
+        }
+      }
+    },
+    "Sign Out" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đăng xuất"
+          }
+        }
+      }
+    },
+    "Sign Out…" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đăng xuất…"
+          }
+        }
+      }
+    },
+    "Signed in as %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đã đăng nhập: %@"
+          }
+        }
+      }
+    },
     "Signing identity or keystore" : {
       "localizations" : {
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Chứng chỉ ký hoặc keystore"
+          }
+        }
+      }
+    },
+    "Signing in…" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đang đăng nhập…"
           }
         }
       }
@@ -2718,6 +2928,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Đã xảy ra sự cố."
+          }
+        }
+      }
+    },
+    "SSH remotes use your SSH key and agent." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remote SSH dùng SSH key và agent của bạn."
           }
         }
       }
@@ -2902,6 +3122,26 @@
         }
       }
     },
+    "Terminal and other git apps use it too." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminal và các app git khác cũng đang dùng tài khoản này."
+          }
+        }
+      }
+    },
+    "The account couldn't be saved." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Không lưu được tài khoản."
+          }
+        }
+      }
+    },
     "The branch has no upstream yet. It will be pushed to origin and tracked from now on." : {
       "localizations" : {
         "vi" : {
@@ -3042,6 +3282,16 @@
         }
       }
     },
+    "The saved account no longer works. Sign in again." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tài khoản đã lưu không còn dùng được. Hãy đăng nhập lại."
+          }
+        }
+      }
+    },
     "The server refused the push, for example a protected branch." : {
       "localizations" : {
         "vi" : {
@@ -3148,6 +3398,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Commit này có thể chứa secret"
+          }
+        }
+      }
+    },
+    "This connection isn't encrypted." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kết nối này không được mã hoá."
           }
         }
       }
@@ -3352,6 +3612,16 @@
         }
       }
     },
+    "Username" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Username"
+          }
+        }
+      }
+    },
     "VI" : {
       "shouldTranslate" : false
     },
@@ -3411,6 +3681,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hãy viết message"
+          }
+        }
+      }
+    },
+    "Wrong username, password or token." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sai username, mật khẩu hoặc token."
           }
         }
       }
