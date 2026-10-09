@@ -15,16 +15,15 @@ struct WorkingCopyView: View {
 
     var body: some View {
         let workingCopy = model.workingCopy
-        HSplitView {
+        PaneSplit(leadingWidth: 300...680, idealLeadingWidth: 420, trailingMinWidth: 340) {
             VSplitView {
                 ChangeListView(workingCopy: workingCopy)
                     .frame(minHeight: 180)
                 CommitComposerView(composer: model.composer)
                     .frame(minHeight: 250, idealHeight: 320)
             }
-            .frame(minWidth: 300, idealWidth: 420, maxWidth: 680)
+        } trailing: {
             DiffView(workingCopy: workingCopy)
-                .frame(minWidth: 340, maxWidth: .infinity)
         }
         .task(id: DiffTrigger(refreshCount: model.refreshCount, selection: workingCopy.selection, options: workingCopy.diffOptions)) {
             await workingCopy.loadDiff()

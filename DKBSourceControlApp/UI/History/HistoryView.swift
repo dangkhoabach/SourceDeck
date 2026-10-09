@@ -20,7 +20,7 @@ struct HistoryView: View {
 
     var body: some View {
         let head = history.model.status?.head
-        HSplitView {
+        PaneSplit(leadingWidth: 300...700, idealLeadingWidth: 440, trailingMinWidth: 360) {
             VStack(spacing: 0) {
                 HStack(spacing: 6) {
                     NativeSearchField(text: $history.search, placeholder: String(localized: "Search history", bundle: AppLocale.bundle))
@@ -38,9 +38,9 @@ struct HistoryView: View {
                 .padding(.vertical, 8)
                 list
             }
-            .frame(minWidth: 320, idealWidth: 440, maxWidth: 700)
+        } trailing: {
             CommitDetailView(history: history)
-                .frame(minWidth: 420, maxWidth: .infinity, maxHeight: .infinity)
+                .frame(maxHeight: .infinity)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background {

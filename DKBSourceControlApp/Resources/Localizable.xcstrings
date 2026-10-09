@@ -2472,6 +2472,16 @@
         }
       }
     },
+    "Resize" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đổi kích thước"
+          }
+        }
+      }
+    },
     "Resolve it in an editor or Sourcetree, then stage it." : {
       "localizations" : {
         "vi" : {

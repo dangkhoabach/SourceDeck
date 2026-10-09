@@ -15,7 +15,10 @@ struct ContentView: View {
                 StartupStatusView(git: services.git, databaseError: services.database.failure)
             }
         }
-        .frame(minWidth: 1100, minHeight: 700)
+        // No minimum width here: a fixed one, smaller than what the columns
+        // need, let them run past the window's edges. The split view adds up
+        // its columns' own.
+        .frame(minHeight: 700)
     }
 }
 
@@ -30,11 +33,17 @@ private struct MainWindowView: View {
             RepositorySidebar(list: list)
                 .navigationSplitViewColumnWidth(min: 200, ideal: 240, max: 360)
         } detail: {
-            if let model = list.selectedModel {
-                RepositoryView(model: model, showsLog: $showsLog)
-            } else {
-                DashboardView(list: list)
+            Group {
+                if let model = list.selectedModel {
+                    RepositoryView(model: model, showsLog: $showsLog)
+                } else {
+                    DashboardView(list: list)
+                }
             }
+            // The widest tab's own minimum (History), so the window keeps its
+            // size from tab to tab. With the sidebar and the git output at
+            // their usual widths it all fits a 1280-point-wide screen.
+            .frame(minWidth: 680)
         }
         .inspector(isPresented: $showsLog) {
             OperationLogView(log: list.log)
@@ -66,6 +75,9 @@ private struct MainWindowView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             // Coming back from the editor or Terminal is when things changed.
             Task { await list.refreshAll() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didResizeNotification)) { notification in
+            (notification.object as? NSWindow)?.moveBackOnScreen()
         }
     }
 }
@@ -101,6 +113,20 @@ private struct StartupStatusView: View {
                 }
             }
         }
+    }
+}
+
+private extension NSWindow {
+    /// Showing the git output or the sidebar when the content has no room
+    /// left widens the window by that column, past the screen's edge when
+    /// the window is near it. Moves it left until it fits again, unless the
+    /// user is resizing it or its right edge is on another display.
+    func moveBackOnScreen() {
+        guard !inLiveResize, !styleMask.contains(.fullScreen), let visible = screen?.visibleFrame,
+              frame.maxX > visible.maxX,
+              !NSScreen.screens.contains(where: { $0.frame.contains(NSPoint(x: frame.maxX - 1, y: frame.maxY - 1)) })
+        else { return }
+        setFrameOrigin(NSPoint(x: max(visible.minX, visible.maxX - frame.width), y: frame.minY))
     }
 }
 
