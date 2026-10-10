@@ -25,7 +25,7 @@ struct HistoryView: View {
 
     var body: some View {
         let head = history.model.status?.head
-        PaneSplit(leadingWidth: 300...700, idealLeadingWidth: 440, trailingMinWidth: 360) {
+        PaneSplit(size: 300...700, idealSize: 440, otherMinSize: 360) {
             VStack(spacing: 0) {
                 HStack(spacing: 6) {
                     if let path = history.filePath {
@@ -62,7 +62,7 @@ struct HistoryView: View {
                 .padding(.vertical, 8)
                 list
             }
-        } trailing: {
+        } second: {
             CommitDetailView(history: history)
                 .frame(maxHeight: .infinity)
         }
@@ -147,18 +147,16 @@ struct HistoryView: View {
                     .contextMenu { CommitMenuItems(history: history, commit: commit) }
             }
             if !history.commits.isEmpty, !history.reachedEnd {
-                HStack {
-                    Spacer()
-                    ProgressView().controlSize(.small)
-                    Spacer()
-                }
-                // Reaching the end of the list reads the next 200.
-                .onAppear { Task { await history.loadMore() } }
+                SkeletonRows(count: 2, icon: 52, secondLine: true, fills: false)
+                    // Reaching the end of the list reads the next 200.
+                    .onAppear { Task { await history.loadMore() } }
             }
         }
         .overlay {
             if let error = history.loadError {
                 GitErrorBanner(error: error).padding(12).frame(maxHeight: .infinity, alignment: .top)
+            } else if history.commits.isEmpty, history.isLoading {
+                SkeletonRows(count: 12, icon: 52, secondLine: true)
             } else if history.commits.isEmpty, !history.isLoading {
                 if history.filePath != nil {
                     ContentUnavailableView("No commits changed this file", systemImage: "clock",
@@ -174,13 +172,14 @@ struct HistoryView: View {
     }
 }
 
-/// Title, refs, short SHA, author and when; a merge is marked.
+/// SHA, title, refs, author and when; a merge is marked.
 private struct CommitRow: View {
     let commit: Commit
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             HStack(spacing: 6) {
+                SHABadge(oid: commit.shortOID)
                 if commit.isMerge {
                     Image(systemName: "arrow.triangle.merge")
                         .foregroundStyle(.purple)
@@ -197,7 +196,6 @@ private struct CommitRow: View {
                     .clipped()
             }
             HStack(spacing: 6) {
-                Text(verbatim: commit.shortOID).monospaced()
                 Text(verbatim: commit.authorName).lineLimit(1)
                 Spacer(minLength: 0)
                 Text(commit.commitDate, format: .relative(presentation: .named))
@@ -207,6 +205,25 @@ private struct CommitRow: View {
             .foregroundStyle(.secondary)
         }
         .padding(.vertical, 2)
+    }
+}
+
+/// The short SHA each commit is found by, first on its row. On a selected
+/// row the tint would vanish into the highlight, so it turns white there.
+private struct SHABadge: View {
+    let oid: String
+    @Environment(\.backgroundProminence) private var prominence
+
+    var body: some View {
+        let selected = prominence == .increased
+        Text(verbatim: oid)
+            .font(.system(.callout, design: .monospaced).weight(.semibold))
+            .foregroundStyle(selected ? AnyShapeStyle(.white) : AnyShapeStyle(.tint))
+            .padding(.horizontal, 5)
+            .padding(.vertical, 1)
+            .background(selected ? AnyShapeStyle(.white.opacity(0.2)) : AnyShapeStyle(.tint.opacity(0.14)),
+                        in: RoundedRectangle(cornerRadius: 5))
+            .fixedSize()
     }
 }
 

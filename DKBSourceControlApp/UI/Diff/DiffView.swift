@@ -12,7 +12,8 @@ struct DiffView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
-                if let row = workingCopy.diffRow {
+                // While another file is read, its name already.
+                if let row = workingCopy.isLoadingDiff ? workingCopy.selection.first : workingCopy.diffRow {
                     Text(verbatim: row.path)
                         .fontWeight(.medium)
                         .lineLimit(1)
@@ -48,6 +49,15 @@ struct DiffView: View {
 
     @ViewBuilder
     private var content: some View {
+        if workingCopy.isLoadingDiff {
+            SkeletonCode()
+        } else {
+            diffContent
+        }
+    }
+
+    @ViewBuilder
+    private var diffContent: some View {
         switch workingCopy.diff {
         case .none:
             ContentUnavailableView("No file selected", systemImage: "doc.text.magnifyingglass",

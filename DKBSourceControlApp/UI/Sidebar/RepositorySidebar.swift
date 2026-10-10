@@ -25,6 +25,7 @@ struct RepositorySidebar: View {
                                 draftName = model.record.name
                                 renaming = model
                             }
+                            AvatarMenuItems(list: list, model: model)
                             Button("Remove from List…", role: .destructive) { removing = model }
                         }
                 }
@@ -127,6 +128,7 @@ private struct RepositoryRow: View {
 
     var body: some View {
         HStack(spacing: 6) {
+            RepositoryAvatar(model: model, size: 26)
             VStack(alignment: .leading, spacing: 1) {
                 Text(model.record.name).lineLimit(1)
                 if let head = model.status?.head {
@@ -134,6 +136,8 @@ private struct RepositoryRow: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
+                } else if model.refreshError == nil {
+                    SkeletonBlock(width: 70, height: 8).padding(.vertical, 3).skeleton()
                 }
             }
             Spacer(minLength: 4)

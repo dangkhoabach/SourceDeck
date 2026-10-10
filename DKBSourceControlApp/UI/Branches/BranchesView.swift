@@ -57,7 +57,11 @@ struct BranchesView: View {
                 .help("Send every tag to origin")
             }
             .padding(10)
-            list
+            if branches.hasLoaded {
+                list
+            } else {
+                SkeletonRows(count: 6)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .task(id: branches.model.refreshCount) { await branches.load() }

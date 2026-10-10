@@ -232,6 +232,13 @@ final class WorkingCopyModel {
         }
     }
 
+    /// Another file is selected and its diff isn't read yet. Reading the
+    /// same file again keeps its diff on screen instead.
+    var isLoadingDiff: Bool {
+        guard selection.count == 1, let row = selection.first, entry(row) != nil else { return false }
+        return row != diffRow
+    }
+
     private func show(_ content: DiffContent, for row: Row) {
         // Picked lines only mean something in the diff they were picked in.
         var sameDiff = false

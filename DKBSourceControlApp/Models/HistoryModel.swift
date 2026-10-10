@@ -28,6 +28,10 @@ final class HistoryModel {
     /// Folders closed in the tree layout; kept from one commit to the next.
     var collapsedFolders: Set<String> = []
     private(set) var fileDiff: DiffFile?
+    /// The commit `files` belong to, and the commit and file `fileDiff`
+    /// shows: until they match the selection, it is being read.
+    private(set) var filesCommit: String?
+    private(set) var fileDiffKey: String?
     /// The file whose history the list shows instead of every commit,
     /// followed through renames (plan: history actions §3.3).
     private(set) var filePath: String?
@@ -69,6 +73,11 @@ final class HistoryModel {
     /// a fetch or a new search). A new search waits for typing to pause.
     func reload() async {
         let query = Query(search: search.trimmingCharacters(in: .whitespaces), scope: scope, file: filePath, revision: revision)
+        // Another branch or file: the old list would pass for it meanwhile.
+        if let loadedQuery, loadedQuery.file != query.file || loadedQuery.revision != query.revision {
+            commits = []
+            reachedEnd = false
+        }
         if let loadedQuery, loadedQuery.search != query.search {
             try? await Task.sleep(for: .milliseconds(300))
             guard !Task.isCancelled else { return }
@@ -124,12 +133,14 @@ final class HistoryModel {
     func loadFiles() async {
         guard let oid = selection else {
             files = []
+            filesCommit = nil
             selectedFile = nil
             return
         }
         let loaded = (try? await model.repository.commitFiles(oid)) ?? []
         guard !Task.isCancelled, selection == oid else { return }
         files = loaded
+        filesCommit = oid
         // In a file's history, that file, by its name at this commit.
         if let path = fileChanges[oid]?.path, loaded.contains(where: { $0.path == path }) {
             selectedFile = path
@@ -138,15 +149,24 @@ final class HistoryModel {
         }
     }
 
+    var isLoadingFiles: Bool { selection != nil && selection != filesCommit }
+    var isLoadingFileDiff: Bool { selectedFile != nil && !isLoadingFiles && fileDiffKey != Self.diffKey(selection, selectedFile) }
+
     func loadFileDiff() async {
         guard let oid = selection, let path = selectedFile, let file = files.first(where: { $0.path == path }) else {
             fileDiff = nil
+            fileDiffKey = nil
             return
         }
         let diff = try? await model.repository.diff(path: file.path, originalPath: file.originalPath, area: .commit(oid),
                                                     options: model.workingCopy.diffOptions)
         guard !Task.isCancelled else { return }
         fileDiff = diff
+        fileDiffKey = Self.diffKey(oid, path)
+    }
+
+    private static func diffKey(_ commit: String?, _ path: String?) -> String {
+        "\(commit ?? "")\u{0}\(path ?? "")"
     }
 
     /// Every commit that changed `path`, from a file's menu.

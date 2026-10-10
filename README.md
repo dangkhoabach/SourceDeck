@@ -26,6 +26,9 @@ is in [`docs/dkb-source-control-build-plan.md`](docs/dkb-source-control-build-pl
 
 ## What it does
 
+- **Avatars** for repositories, round like a contact's: the initials of the
+  name on a colour of its own, or a picture or logo chosen from the
+  repository's menu in the sidebar or on the Dashboard.
 - **Dashboard** of every added repository: branch, ahead and behind, staged,
   changed and new files, the last commit; refresh all, fetch all, optional
   automatic fetch. Add a repository by cloning it from a URL, choosing a

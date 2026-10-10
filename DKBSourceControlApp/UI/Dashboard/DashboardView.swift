@@ -16,7 +16,11 @@ struct DashboardView: View {
                         RepositoryCard(model: model)
                     }
                     .buttonStyle(.plain)
-                    .contextMenu { OpenInMenuItems(model: model) }
+                    .contextMenu {
+                        OpenInMenuItems(model: model)
+                        Divider()
+                        AvatarMenuItems(list: list, model: model)
+                    }
                 }
             }
             .padding(20)
@@ -65,7 +69,8 @@ private struct RepositoryCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .firstTextBaseline) {
+            HStack {
+                RepositoryAvatar(model: model, size: 32)
                 Text(model.record.name).font(.headline).lineLimit(1)
                 Spacer()
                 if model.runningOperation != nil || model.isRefreshing {
@@ -83,6 +88,16 @@ private struct RepositoryCard: View {
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 ChangeCounts(status: status)
+            }
+            if model.status == nil, model.refreshError == nil {
+                // Branch, counts and last commit, as they will sit.
+                VStack(alignment: .leading, spacing: 10) {
+                    SkeletonBlock(width: 150, height: 10)
+                    SkeletonBlock(width: 90, height: 8)
+                    SkeletonBlock(height: 10)
+                }
+                .padding(.top, 4)
+                .skeleton()
             }
             if let commit = model.lastCommit {
                 HStack(alignment: .firstTextBaseline) {

@@ -55,7 +55,7 @@ struct BlameSheet: View {
             }
             .font(.system(.callout, design: .monospaced))
         } else {
-            ProgressView()
+            SkeletonCode(lines: 24, gutter: 120)
         }
     }
 

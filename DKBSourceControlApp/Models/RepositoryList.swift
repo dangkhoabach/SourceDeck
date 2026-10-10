@@ -141,6 +141,11 @@ final class RepositoryList {
     }
 
     /// Only the entry goes; the folder on disk is not touched.
+    /// A square PNG, or nil for the initials.
+    func setAvatar(_ model: RepositoryModel, to png: Data?) {
+        try? store.setAvatar(id: model.id, to: png)
+    }
+
     func remove(_ model: RepositoryModel) {
         try? store.remove(id: model.id)
     }

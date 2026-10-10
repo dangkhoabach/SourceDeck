@@ -660,12 +660,32 @@
         }
       }
     },
+    "Choose a picture or logo for “%@”" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn ảnh hoặc logo cho “%@”"
+          }
+        }
+      }
+    },
     "Choose Folder…" : {
       "localizations" : {
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Chọn thư mục…"
+          }
+        }
+      }
+    },
+    "Choose Image…" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn ảnh…"
           }
         }
       }
@@ -2052,6 +2072,16 @@
         }
       }
     },
+    "Loading" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đang tải"
+          }
+        }
+      }
+    },
     "Local" : {
       "localizations" : {
         "vi" : {
@@ -3002,6 +3032,16 @@
         }
       }
     },
+    "Remove Image" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xoá ảnh"
+          }
+        }
+      }
+    },
     "Remove the saved account for %@?" : {
       "localizations" : {
         "vi" : {
@@ -3938,6 +3978,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Thư mục đã bị chuyển hoặc xoá"
+          }
+        }
+      }
+    },
+    "The image couldn't be read" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Không đọc được ảnh này"
           }
         }
       }

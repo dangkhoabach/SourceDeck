@@ -1,3 +1,4 @@
+import AppKit
 import DKBSourceControlCore
 import Foundation
 import Observation
@@ -42,6 +43,8 @@ final class RepositoryModel: Identifiable {
     }
 
     private(set) var record: RepositoryRecord
+    /// The record's picture, read once each time it changes.
+    private(set) var avatarImage: NSImage?
     let repository: GitRepository
     private(set) var status: RepositoryStatus?
     private(set) var lastCommit: Commit?
@@ -98,6 +101,7 @@ final class RepositoryModel: Identifiable {
 
     init(record: RepositoryRecord, git: GitProcess, log: OperationLog, drafts: CommitDraftStore, signIn: RemoteSignIn? = nil) {
         self.record = record
+        avatarImage = record.avatar.flatMap(NSImage.init(data:))
         id = record.id
         repository = GitRepository(root: record.url, git: git)
         self.log = log
@@ -106,6 +110,7 @@ final class RepositoryModel: Identifiable {
     }
 
     func update(_ record: RepositoryRecord) {
+        if record.avatar != self.record.avatar { avatarImage = record.avatar.flatMap(NSImage.init(data:)) }
         self.record = record
     }
 

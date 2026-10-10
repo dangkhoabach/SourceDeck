@@ -35,7 +35,7 @@ struct RepositoryView: View {
                 GitErrorBanner(error: error).padding(12)
                 Spacer(minLength: 0)
             } else {
-                ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+                RepositorySkeleton(tab: model.tab)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -110,6 +110,23 @@ struct RepositoryView: View {
                 Label("Open In", systemImage: "arrow.up.forward.app")
             }
             .help("Open the repository in Finder, a terminal, an editor or on GitHub")
+        }
+    }
+
+    /// The first status read, shaped like the tab it opens on: a list, and
+    /// the diff beside it for Working Copy and History.
+    private struct RepositorySkeleton: View {
+        let tab: RepositoryModel.Tab
+
+        var body: some View {
+            HStack(spacing: 0) {
+                SkeletonRows(count: 10, icon: tab == .history ? 52 : 14, secondLine: tab == .history)
+                    .frame(width: tab == .branches ? nil : 420)
+                if tab != .branches {
+                    Divider()
+                    SkeletonCode()
+                }
+            }
         }
     }
 

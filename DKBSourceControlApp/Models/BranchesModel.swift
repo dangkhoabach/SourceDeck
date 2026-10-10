@@ -13,6 +13,8 @@ final class BranchesModel {
     private(set) var branches: [Branch] = []
     private(set) var stashes: [Stash] = []
     private(set) var tags: [Tag] = []
+    /// Until the first read, empty lists mean nothing yet, not none.
+    private(set) var hasLoaded = false
     /// A switch waiting on uncommitted changes: stash them first, or cancel.
     var pendingSwitch: Branch?
 
@@ -32,6 +34,7 @@ final class BranchesModel {
         if let branches = loaded.0 { self.branches = branches }
         if let stashes = loaded.1 { self.stashes = stashes }
         if let tags = loaded.2 { self.tags = tags }
+        hasLoaded = true
     }
 
     /// Staged or modified tracked files would travel along or block the

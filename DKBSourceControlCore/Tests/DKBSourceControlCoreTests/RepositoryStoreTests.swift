@@ -1,4 +1,5 @@
 import Foundation
+import GRDB
 import Testing
 @testable import DKBSourceControlCore
 
@@ -33,6 +34,53 @@ import Testing
         #expect(try store.all().first?.name == "Portfolio")
         try store.rename(id: record.id, to: " ")
         #expect(try store.all().first?.name == "MyWebsite")
+    }
+
+    @Test(arguments: [
+        ("DKB-Source-Control", "DS"), ("CaPheSuaDa", "CP"), ("iHub", "IH"), ("KTVinaLogistics", "KL"),
+        ("dangkhoabach-Workspace", "DW"), ("Cà Phê Tý Mập", "CP"), ("repo", "R"), ("my_website v2", "MW"), ("2024 notes", "2N"),
+    ])
+    func initialsAreTheFirstLettersOfTheFirstTwoWords(name: String, initials: String) {
+        #expect(RepositoryRecord(path: "/x", name: name, sortOrder: 0).initials == initials)
+    }
+
+    @Test func anAvatarIsSavedAndRemoved() throws {
+        let store = try makeStore()
+        let record = try store.add(path: "/Users/x/repo")
+        #expect(record.avatar == nil)
+        try store.setAvatar(id: record.id, to: Data([1, 2, 3]))
+        #expect(try store.all().first?.avatar == Data([1, 2, 3]))
+        try store.setAvatar(id: record.id, to: nil)
+        #expect(try store.all().first?.avatar == nil)
+    }
+
+    /// A list made before avatars keeps every repository and its draft.
+    @Test func theAvatarMigrationKeepsExistingRepositories() throws {
+        let dbQueue = try DatabaseQueue()
+        try AppDatabase.migrator.migrate(dbQueue, upTo: "v2_commit_drafts")
+        try dbQueue.write { db in
+            try db.execute(sql: "INSERT INTO repositories VALUES ('a', '/Users/x/repo', 'Repo', 0, '2026-10-09 10:00:00.000')")
+        }
+        try AppDatabase.migrator.migrate(dbQueue)
+        let records = try RepositoryStore(dbQueue: dbQueue).all()
+        #expect(records.map(\.name) == ["Repo"] && records.first?.avatar == nil)
+    }
+
+    /// A draft whose repository is gone (left on the owner's debug database
+    /// by an early sandbox) must not stop the list from opening: GRDB's
+    /// default check after a migration looks at every foreign key.
+    @Test func theAvatarMigrationRunsOverADraftWithoutItsRepository() throws {
+        let dbQueue = try DatabaseQueue()
+        try AppDatabase.migrator.migrate(dbQueue, upTo: "v2_commit_drafts")
+        try dbQueue.writeWithoutTransaction { db in
+            try db.execute(sql: "PRAGMA foreign_keys = OFF")
+            try db.execute(sql: """
+                INSERT INTO commit_drafts VALUES ('SANDBOX-0000', 'Update', '[]', NULL, 0, '2026-10-08 15:50:24.649')
+                """)
+            try db.execute(sql: "PRAGMA foreign_keys = ON")
+        }
+        try AppDatabase.migrator.migrate(dbQueue)
+        #expect(try dbQueue.read { try Int.fetchOne($0, sql: "SELECT COUNT(*) FROM commit_drafts") } == 1)
     }
 
     /// Arguments as SwiftUI's `onMove` passes them.

@@ -15,14 +15,14 @@ struct WorkingCopyView: View {
 
     var body: some View {
         let workingCopy = model.workingCopy
-        PaneSplit(leadingWidth: 300...680, idealLeadingWidth: 420, trailingMinWidth: 340) {
-            VSplitView {
+        PaneSplit(size: 300...680, idealSize: 420, otherMinSize: 340) {
+            // The composer keeps its height; the file list takes the rest.
+            PaneSplit(.vertical, sizedPane: .second, size: 250...640, idealSize: 320, otherMinSize: 180) {
                 ChangeListView(workingCopy: workingCopy)
-                    .frame(minHeight: 180)
+            } second: {
                 CommitComposerView(composer: model.composer)
-                    .frame(minHeight: 250, idealHeight: 320)
             }
-        } trailing: {
+        } second: {
             DiffView(workingCopy: workingCopy)
         }
         .task(id: DiffTrigger(refreshCount: model.refreshCount, selection: workingCopy.selection, options: workingCopy.diffOptions)) {

@@ -1,3 +1,4 @@
+import AppKit
 import DKBSourceControlCore
 import Foundation
 import Testing
@@ -93,5 +94,38 @@ import Testing
         #expect(list.log.entries.first?.succeeded == false)
         #expect(!FileManager.default.fileExists(atPath: parent.appendingPathComponent("other").path))
         try await waitForModels(list, count: 1)
+    }
+
+    /// A chosen picture is stored as a 256-point square PNG and shown in
+    /// place of the initials until it is removed.
+    @Test func aChosenPictureReplacesTheInitialsUntilRemoved() async throws {
+        let repo = try await makeFolder(repository: true)
+        defer { try? FileManager.default.removeItem(at: repo) }
+        let list = RepositoryList(database: try AppDatabase.inMemory(), git: git)
+        await list.add([repo], select: false)
+        try await waitForModels(list, count: 1)
+        let model = try #require(list.models.first)
+
+        // A wide logo, written as a file the way the open panel hands it over.
+        let wide = NSImage(size: NSSize(width: 400, height: 100), flipped: false) { rect in
+            NSColor.systemBlue.setFill()
+            rect.fill()
+            return true
+        }
+        let file = repo.appendingPathComponent("logo.tiff")
+        try #require(wide.tiffRepresentation).write(to: file)
+        let png = try #require(RepositoryAvatar.png(from: file))
+        let rep = try #require(NSBitmapImageRep(data: png))
+        #expect(rep.pixelsWide == 256 && rep.pixelsHigh == 256)
+        // Fitted whole: the corners stay transparent.
+        #expect(rep.colorAt(x: 0, y: 0)?.alphaComponent == 0 && rep.colorAt(x: 128, y: 128)?.alphaComponent == 1)
+        #expect(RepositoryAvatar.png(from: repo.appendingPathComponent("missing.png")) == nil)
+
+        list.setAvatar(model, to: png)
+        for _ in 0..<100 where model.avatarImage == nil { try await Task.sleep(for: .milliseconds(20)) }
+        #expect(model.record.avatar == png && model.avatarImage != nil)
+        list.setAvatar(model, to: nil)
+        for _ in 0..<100 where model.avatarImage != nil { try await Task.sleep(for: .milliseconds(20)) }
+        #expect(model.record.avatar == nil && model.avatarImage == nil)
     }
 }

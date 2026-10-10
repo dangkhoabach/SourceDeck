@@ -293,4 +293,45 @@ import Testing
         await branches.load()
         #expect(model.status?.unstagedCount == 1 && branches.stashes.count == 1)
     }
+
+    /// Skeletons stand for content being read, never for content shown:
+    /// another commit, file or branch is loading until its read ends; the
+    /// same one read again isn't.
+    @Test func loadingFlagsCoverOnlyNewContent() async throws {
+        let (model, url) = try await makeModel()
+        defer { try? FileManager.default.removeItem(at: url) }
+        try await sh("echo a > a.txt && git add a.txt && git commit -qm one && git branch other && echo b > b.txt "
+                     + "&& git add b.txt && git commit -qm two && echo c >> a.txt", in: url)
+        await model.refresh()
+        let history = model.history
+        #expect(!model.branches.hasLoaded)
+        await model.branches.load()
+        #expect(model.branches.hasLoaded)
+
+        await history.reload()
+        history.selection = history.commits[0].oid
+        #expect(history.isLoadingFiles)
+        await history.loadFiles()
+        #expect(!history.isLoadingFiles)
+        history.selectedFile = "b.txt"
+        #expect(history.isLoadingFileDiff)
+        await history.loadFileDiff()
+        #expect(!history.isLoadingFileDiff && history.fileDiff != nil)
+
+        // Another branch: the old list is gone at once, not shown as its.
+        history.revision = "other"
+        let reading = Task { await history.reload() }
+        await Task.yield()
+        #expect(history.commits.isEmpty && history.isLoading)
+        await reading.value
+        #expect(history.commits.map(\.message) == ["one"])
+
+        let workingCopy = model.workingCopy
+        workingCopy.selection = [.init(area: .unstaged, path: "a.txt")]
+        #expect(workingCopy.isLoadingDiff)
+        await workingCopy.loadDiff()
+        #expect(!workingCopy.isLoadingDiff)
+        await workingCopy.loadDiff()
+        #expect(!workingCopy.isLoadingDiff)
+    }
 }

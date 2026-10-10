@@ -16,7 +16,7 @@ struct AccountsSection: View {
         Section {
             if accounts.isEmpty {
                 if isLoading {
-                    ProgressView().controlSize(.small)
+                    SkeletonRows(count: 2, secondLine: true, fills: false)
                 } else {
                     Text("No repository in the list has an HTTPS remote.").foregroundStyle(.secondary)
                 }

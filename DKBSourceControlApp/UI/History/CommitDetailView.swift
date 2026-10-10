@@ -16,41 +16,18 @@ struct CommitDetailView: View {
 
     var body: some View {
         if let commit = history.selectedCommit {
-            VSplitView {
+            PaneSplit(.vertical, size: 260...760, idealSize: 400, otherMinSize: 200) {
                 VStack(alignment: .leading, spacing: 0) {
                     CommitMeta(history: history, commit: commit)
                         .padding(12)
                     Divider()
-                    List(selection: $history.selectedFile) {
-                        if history.files.isEmpty {
-                            // git shows a merge against its first parent (plan D7).
-                            Text(commit.isMerge ? "This merge brought in nothing its first parent didn't already have."
-                                                : "This commit changed no files.")
-                                .foregroundStyle(.secondary)
-                        }
-                        Section {
-                            if layout == .tree {
-                                fileTree
-                            } else {
-                                ForEach(history.files) { file in
-                                    CommitFileRow(file: file, showsFolder: true)
-                                }
-                            }
-                        } header: {
-                            HStack {
-                                Text("Files \(history.files.count)")
-                                Spacer()
-                                FileListLayoutPicker().controlSize(.small)
-                            }
-                        }
-                    }
-                    .contextMenu(forSelectionType: String.self) { paths in
-                        if paths.count == 1, let file = history.files.first(where: { $0.path == paths.first }) {
-                            CommitFileMenuItems(history: history, commit: commit, file: file)
-                        }
+                    if history.isLoadingFiles {
+                        SkeletonRows(count: 6)
+                    } else {
+                        fileList(commit)
                     }
                 }
-                .frame(minHeight: 220, idealHeight: 320)
+            } second: {
                 VStack(spacing: 0) {
                     HStack(spacing: 12) {
                         Text(verbatim: history.selectedFile ?? "")
@@ -64,7 +41,9 @@ struct CommitDetailView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 7)
                     Divider()
-                    if let diff = history.fileDiff {
+                    if history.isLoadingFiles || history.isLoadingFileDiff {
+                        SkeletonCode()
+                    } else if let diff = history.fileDiff {
                         DiffFileView(file: diff, root: history.model.record.url, actions: nil)
                             // Back to the top for another file, not for other options.
                             .id([history.selection, history.selectedFile])
@@ -73,7 +52,6 @@ struct CommitDetailView: View {
                                                description: Text("Select a file to see what this commit changed in it."))
                     }
                 }
-                .frame(minHeight: 200, maxHeight: .infinity)
             }
             .task(id: DiffKey(commit: history.selection, file: history.selectedFile, options: history.model.workingCopy.diffOptions)) {
                 await history.loadFileDiff()
@@ -81,6 +59,38 @@ struct CommitDetailView: View {
         } else {
             ContentUnavailableView("No commit selected", systemImage: "clock",
                                    description: Text("Select a commit to see its message and files."))
+        }
+    }
+
+    /// The commit's files, as a list or a tree, with their menu.
+    private func fileList(_ commit: Commit) -> some View {
+        List(selection: $history.selectedFile) {
+            if history.files.isEmpty {
+                // git shows a merge against its first parent (plan D7).
+                Text(commit.isMerge ? "This merge brought in nothing its first parent didn't already have."
+                                    : "This commit changed no files.")
+                    .foregroundStyle(.secondary)
+            }
+            Section {
+                if layout == .tree {
+                    fileTree
+                } else {
+                    ForEach(history.files) { file in
+                        CommitFileRow(file: file, showsFolder: true)
+                    }
+                }
+            } header: {
+                HStack {
+                    Text("Files \(history.files.count)")
+                    Spacer()
+                    FileListLayoutPicker().controlSize(.small)
+                }
+            }
+        }
+        .contextMenu(forSelectionType: String.self) { paths in
+            if paths.count == 1, let file = history.files.first(where: { $0.path == paths.first }) {
+                CommitFileMenuItems(history: history, commit: commit, file: file)
+            }
         }
     }
 
@@ -204,7 +214,8 @@ private struct CommitMeta: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(8)
             }
-            .frame(maxHeight: 140)
+            // Never squeezed by the file list below it to less than a few lines.
+            .frame(minHeight: 60, maxHeight: 140)
             .background(.quinary, in: RoundedRectangle(cornerRadius: 6))
         }
     }

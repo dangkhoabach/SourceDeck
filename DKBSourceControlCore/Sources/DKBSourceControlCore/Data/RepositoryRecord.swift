@@ -9,16 +9,44 @@ public struct RepositoryRecord: Codable, Identifiable, Equatable, Sendable {
     public var name: String
     public var sortOrder: Int
     public var addedAt: Date
+    /// A picture the user chose for the sidebar, as a square PNG; nil
+    /// shows the initials.
+    public var avatar: Data?
 
-    public init(id: String = UUID().uuidString, path: String, name: String, sortOrder: Int, addedAt: Date = Date()) {
+    public init(id: String = UUID().uuidString, path: String, name: String, sortOrder: Int, addedAt: Date = Date(),
+                avatar: Data? = nil) {
         self.id = id
         self.path = path
         self.name = name
         self.sortOrder = sortOrder
         self.addedAt = addedAt
+        self.avatar = avatar
     }
 
     public var url: URL { URL(fileURLWithPath: path, isDirectory: true) }
+
+    /// Up to two letters for the avatar, as Contacts does with a first and
+    /// last name: the first letters of the first two words of the name.
+    /// Words are split at anything not a letter or digit, and a single word
+    /// at its capitals: "DKB-Source-Control" "DS", "CaPheSuaDa" "CP",
+    /// "iHub" "IH", "repo" "R".
+    public var initials: String {
+        var words = name.split { !$0.isLetter && !$0.isNumber }.map(String.init)
+        if words.count == 1 { words = Self.camelCaseWords(words[0]) }
+        return words.prefix(2).compactMap(\.first).map { $0.uppercased() }.joined()
+    }
+
+    /// "CaPheSuaDa" → Ca, Phe, Ty, Map; "KTVina" stays one word.
+    private static func camelCaseWords(_ word: String) -> [String] {
+        var words = [""]
+        var previous: Character?
+        for character in word {
+            if let previous, previous.isLowercase, character.isUppercase { words.append("") }
+            words[words.count - 1].append(character)
+            previous = character
+        }
+        return words
+    }
 }
 
 extension RepositoryRecord: FetchableRecord, PersistableRecord {
@@ -28,6 +56,7 @@ extension RepositoryRecord: FetchableRecord, PersistableRecord {
         case id, path, name
         case sortOrder = "sort_order"
         case addedAt = "added_at"
+        case avatar
     }
 }
 
@@ -83,6 +112,15 @@ public struct RepositoryStore: Sendable {
             guard var record = try RepositoryRecord.fetchOne(db, key: id) else { return }
             let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
             record.name = trimmed.isEmpty ? URL(fileURLWithPath: record.path).lastPathComponent : trimmed
+            try record.update(db)
+        }
+    }
+
+    /// nil puts the initials back.
+    public func setAvatar(id: String, to avatar: Data?) throws {
+        try dbQueue.write { db in
+            guard var record = try RepositoryRecord.fetchOne(db, key: id) else { return }
+            record.avatar = avatar
             try record.update(db)
         }
     }

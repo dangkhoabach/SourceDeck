@@ -55,6 +55,15 @@ public struct AppDatabase: Sendable {
                 """)
         }
 
+        // The picture shown instead of the initials: a square PNG, or NULL.
+        // `.immediate`: checks only what this migration writes. GRDB's
+        // default checks every foreign key afterwards, and a draft left
+        // without its repository by an early sandbox then stopped the list
+        // from opening.
+        migrator.registerMigration("v3_repository_avatar", foreignKeyChecks: .immediate) { db in
+            try db.execute(sql: "ALTER TABLE repositories ADD COLUMN avatar BLOB")
+        }
+
         return migrator
     }
 }
