@@ -3,7 +3,7 @@ import DKBSourceControlCore
 import SwiftUI
 
 /// Commits newest first, 200 at a time (plan F6), with search by message,
-/// author or path; the selected commit on the right.
+/// author or path, or one file's history; the selected commit on the right.
 struct HistoryView: View {
     @Bindable var history: HistoryModel
     @FocusState private var searchFocused: Bool
@@ -16,6 +16,7 @@ struct HistoryView: View {
         let behind: Int
         let search: String
         let scope: HistoryModel.SearchScope
+        let file: String?
     }
 
     var body: some View {
@@ -23,17 +24,35 @@ struct HistoryView: View {
         PaneSplit(leadingWidth: 300...700, idealLeadingWidth: 440, trailingMinWidth: 360) {
             VStack(spacing: 0) {
                 HStack(spacing: 6) {
-                    NativeSearchField(text: $history.search, placeholder: String(localized: "Search history", bundle: AppLocale.bundle))
-                        .focused($searchFocused)
-                    Picker("Search in", selection: $history.scope) {
-                        Text("Message").tag(HistoryModel.SearchScope.message)
-                        Text("Author").tag(HistoryModel.SearchScope.author)
-                        Text("Path").tag(HistoryModel.SearchScope.path)
+                    if let path = history.filePath {
+                        Image(systemName: "clock.arrow.circlepath").foregroundStyle(.secondary)
+                        Text("History of \(path)")
+                            .lineLimit(1)
+                            .truncationMode(.head)
+                            .help(path)
+                        Spacer(minLength: 0)
+                        Button("Show All History", systemImage: "xmark.circle.fill") { history.showAllHistory() }
+                            .labelStyle(.iconOnly)
+                            .buttonStyle(.borderless)
+                            .help("Show All History")
+                    } else {
+                        NativeSearchField(text: $history.search, placeholder: String(localized: "Search history", bundle: AppLocale.bundle))
+                            .focused($searchFocused)
+                        Picker("Search in", selection: $history.scope) {
+                            Text("Message").tag(HistoryModel.SearchScope.message)
+                            Text("Author").tag(HistoryModel.SearchScope.author)
+                            Text("Path").tag(HistoryModel.SearchScope.path)
+                        }
+                        .labelsHidden()
+                        .fixedSize()
+                        .help("Where to look: commit messages, author names and emails, or a file or folder path")
+                        Button("File History…", systemImage: "clock.arrow.circlepath", action: chooseFile)
+                            .labelStyle(.iconOnly)
+                            .buttonStyle(.borderless)
+                            .help("Choose a file to see every commit that changed it")
                     }
-                    .labelsHidden()
-                    .fixedSize()
-                    .help("Where to look: commit messages, author names and emails, or a file or folder path")
                 }
+                .frame(minHeight: 22)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 8)
                 list
@@ -49,10 +68,25 @@ struct HistoryView: View {
                 .hidden()
         }
         .task(id: ReloadKey(head: head?.oid, upstream: head?.upstream, ahead: head?.ahead ?? 0, behind: head?.behind ?? 0,
-                            search: history.search, scope: history.scope)) {
+                            search: history.search, scope: history.scope, file: history.filePath)) {
             await history.reload()
         }
         .task(id: history.selection) { await history.loadFiles() }
+        .sheet(item: $history.pendingReset) { commit in
+            ResetSheet(history: history, commit: commit).environment(\.locale, AppLocale.current.locale)
+        }
+    }
+
+    /// Any file of the repository, for its history.
+    private func chooseFile() {
+        let root = history.model.record.url.resolvingSymlinksInPath()
+        let panel = NSOpenPanel()
+        panel.directoryURL = root
+        panel.canChooseDirectories = false
+        panel.message = String(localized: "Choose a file to see every commit that changed it", bundle: AppLocale.bundle)
+        guard panel.runModal() == .OK, let url = panel.url?.resolvingSymlinksInPath() else { return }
+        guard url.path.hasPrefix(root.path + "/") else { return NSSound.beep() }
+        history.showHistory(of: String(url.path.dropFirst(root.path.count + 1)))
     }
 
     private var list: some View {
@@ -76,7 +110,10 @@ struct HistoryView: View {
             if let error = history.loadError {
                 GitErrorBanner(error: error).padding(12).frame(maxHeight: .infinity, alignment: .top)
             } else if history.commits.isEmpty, !history.isLoading {
-                if history.search.isEmpty {
+                if history.filePath != nil {
+                    ContentUnavailableView("No commits changed this file", systemImage: "clock",
+                                           description: Text("It isn't in the history of this branch yet."))
+                } else if history.search.isEmpty {
                     ContentUnavailableView("No commits yet", systemImage: "clock",
                                            description: Text("The first commit will show up here."))
                 } else {
@@ -147,7 +184,8 @@ struct RefChip: View {
     }
 }
 
-/// Copy SHA, copy message, open on GitHub, reuse the message.
+/// Copy SHA, copy message, open on GitHub, reuse the message; revert the
+/// commit or reset the branch to it.
 struct CommitMenuItems: View {
     let history: HistoryModel
     let commit: Commit
@@ -162,6 +200,26 @@ struct CommitMenuItems: View {
         Button("Use This Message") {
             history.model.composer.use(commit.message)
             history.model.tab = .workingCopy
+        }
+        if let status = history.model.status {
+            let busy = status.state != .normal
+            Divider()
+            // Staged changes would end up in the revert's commit.
+            Button("Revert Commit") { Task { await history.revert(commit) } }
+                .disabled(busy || status.stagedCount > 0)
+                .help(busy ? "Finish or abort what is in progress first."
+                      : status.stagedCount > 0 ? "Commit or unstage the staged changes first."
+                      : "Stage the opposite of this commit's changes, to commit from Working Copy")
+            if status.head.oid != commit.oid {
+                Group {
+                    if let branch = status.head.branch {
+                        Button("Reset “\(branch)” to Here…") { history.pendingReset = commit }
+                    } else {
+                        Button("Reset HEAD to Here…") { history.pendingReset = commit }
+                    }
+                }
+                .disabled(busy)
+            }
         }
     }
 

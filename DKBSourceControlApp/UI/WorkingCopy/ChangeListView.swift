@@ -176,6 +176,10 @@ struct ChangeListView: View {
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(all.map { root.appendingPathComponent($0.path).path }.joined(separator: "\n"), forType: .string)
             }
+            // A new file has no commits yet.
+            if all.count == 1, let entry = all.first, !entry.isUntracked, entry.index != .added {
+                Button("Show File History") { workingCopy.model.history.showHistory(of: entry.originalPath ?? entry.path) }
+            }
         }
         if unstaged.contains(where: \.isUntracked) {
             Divider()

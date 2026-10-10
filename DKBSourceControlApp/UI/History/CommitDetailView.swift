@@ -44,6 +44,11 @@ struct CommitDetailView: View {
                             }
                         }
                     }
+                    .contextMenu(forSelectionType: String.self) { paths in
+                        if paths.count == 1, let path = paths.first {
+                            Button("Show File History") { history.showHistory(of: path) }
+                        }
+                    }
                 }
                 .frame(minHeight: 220, idealHeight: 320)
                 VStack(spacing: 0) {

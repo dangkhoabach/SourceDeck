@@ -120,4 +120,66 @@ import Testing
         // The diff changed, so the picked lines are gone.
         #expect(workingCopy.selectedLines.isEmpty)
     }
+
+    /// docs/history-actions-plan.md §3.1.
+    @Test func revertStagesTheOppositeAndFillsTheComposerInWorkingCopy() async throws {
+        let (model, url) = try await makeModel()
+        defer { try? FileManager.default.removeItem(at: url) }
+        try await sh("echo one > a.txt && git add a.txt && git commit -qm one && echo two >> a.txt && git commit -qam two", in: url)
+        await model.refresh()
+        let history = model.history
+        await history.reload()
+        let two = try #require(history.commits.first)
+        model.tab = .history
+
+        await history.revert(two)
+        #expect(model.tab == .workingCopy)
+        #expect(model.status?.state == .reverting && model.status?.stagedCount == 1)
+        #expect(model.composer.draft.message == "+ Update +\n - Revert \(two.shortOID): two")
+        #expect(try String(contentsOf: url.appendingPathComponent("a.txt"), encoding: .utf8) == "one\n")
+        // The draft is saved half a second late, by then without its model.
+        model.saveDraft()
+    }
+
+    /// docs/history-actions-plan.md §3.2: nothing uncommitted is lost.
+    @Test func resetHardStashesEveryChangeFirst() async throws {
+        let (model, url) = try await makeModel()
+        defer { try? FileManager.default.removeItem(at: url) }
+        try await sh("echo one > a.txt && git add a.txt && git commit -qm one && echo two >> a.txt && git commit -qam two "
+                     + "&& echo mine >> a.txt && echo new > new.txt", in: url)
+        await model.refresh()
+        let history = model.history
+        await history.reload()
+        let one = try #require(history.commits.last)
+
+        await history.reset(to: one, mode: .hard)
+        #expect(model.status?.head.oid == one.oid && model.status?.isClean == true)
+        let stashes = try await model.repository.stashes()
+        #expect(stashes.count == 1 && stashes[0].message.contains("Before resetting to \(one.shortOID)"))
+        let stashed = try await git.run(["stash", "show", "--include-untracked", "--name-only", stashes[0].ref], in: url).stdoutText
+        #expect(stashed == "a.txt\nnew.txt\n")
+    }
+
+    /// docs/history-actions-plan.md §3.3: the file is selected by its name
+    /// at each commit, before a rename too.
+    @Test func fileHistoryListsTheFilesCommitsAndSelectsItByItsNameThen() async throws {
+        let (model, url) = try await makeModel()
+        defer { try? FileManager.default.removeItem(at: url) }
+        try await sh("echo one > a.txt && git add a.txt && git commit -qm 'add a' && echo x > other.txt && git add other.txt "
+                     + "&& git commit -qm other && git mv a.txt b.txt && git commit -qm rename", in: url)
+        await model.refresh()
+        let history = model.history
+
+        history.showHistory(of: "b.txt")
+        #expect(model.tab == .history)
+        await history.reload()
+        #expect(history.commits.map(\.message) == ["rename", "add a"])
+        history.selection = history.commits.last?.oid
+        await history.loadFiles()
+        #expect(history.selectedFile == "a.txt")
+
+        history.showAllHistory()
+        await history.reload()
+        #expect(history.commits.map(\.message) == ["rename", "other", "add a"])
+    }
 }

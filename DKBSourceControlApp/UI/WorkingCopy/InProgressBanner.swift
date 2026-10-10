@@ -18,6 +18,10 @@ struct InProgressBanner: View {
                 if conflicts > 0 {
                     Text("Conflicted files: \(conflicts). Resolve them in an editor or Sourcetree, then stage them.")
                         .font(.callout).foregroundStyle(.secondary)
+                } else if [.merging, .cherryPicking, .reverting].contains(status.state) {
+                    // A revert from History stops here on purpose (plan: history actions §3.1).
+                    Text("Commit to finish it, or abort to go back.")
+                        .font(.callout).foregroundStyle(.secondary)
                 }
             }
             Spacer(minLength: 0)

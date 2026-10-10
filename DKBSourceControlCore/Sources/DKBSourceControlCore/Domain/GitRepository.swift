@@ -50,6 +50,11 @@ public enum PullMode: String, Sendable, CaseIterable {
     case fastForwardOnly, rebase
 }
 
+/// `git reset --soft`, `--mixed` or `--hard`.
+public enum ResetMode: String, Sendable, CaseIterable {
+    case soft, mixed, hard
+}
+
 /// One work tree, and every git command the app runs in it (plan §5.3).
 ///
 /// Writes run one at a time, in the order they were asked for: an actor
@@ -148,6 +153,34 @@ public actor GitRepository {
             if try await hasHead() { throw error }
             return []
         }
+    }
+
+    /// The commits that changed one file, newest first, followed through
+    /// renames; each with the file's name at that commit. A merge is
+    /// compared with its first parent, as in `commitFiles`.
+    ///
+    /// `--skip` with `--follow` skips commits before keeping the file's
+    /// (git 2.54), so a later page reads the earlier ones again and drops them.
+    public func fileHistory(path: String, limit: Int = 200, skip: Int = 0) async throws -> [FileRevision] {
+        let arguments = [Self.literal, "log", "-z", "--follow", "--name-status", "-M", Self.firstParent, "--decorate=full",
+                         FileHistoryParser.format, "--max-count=\(skip + limit)", "HEAD", "--", path]
+        do {
+            return Array(FileHistoryParser.parse(try await run(arguments, readOnly: true).stdout).dropFirst(skip))
+        } catch let error as GitCommandError {
+            if try await hasHead() { throw error }
+            return []
+        }
+    }
+
+    /// How many commits resetting to `oid` takes off the branch, and how
+    /// many of those no remote-tracking branch has: the rest were pushed.
+    public func commitsAfter(_ oid: String) async throws -> (total: Int, notOnRemote: Int) {
+        try Self.requireArgument(oid)
+        func count(_ arguments: [String]) async throws -> Int {
+            Int(try await run(["rev-list", "--count"] + arguments, readOnly: true).stdoutText
+                .trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
+        }
+        return (try await count(["\(oid)..HEAD"]), try await count(["\(oid)..HEAD", "--not", "--remotes"]))
     }
 
     /// Files a commit changed; a merge is compared with its first parent.
@@ -323,6 +356,24 @@ public actor GitRepository {
 
     public func stashDrop(_ stash: Stash) async throws -> OperationOutput {
         try await write(["stash", "drop", stash.ref])
+    }
+
+    /// The opposite of `commit`'s changes, staged and not committed: the
+    /// app's commits go through the composer (git-rule), never git's
+    /// `Revert "…"`. Leaves `REVERT_HEAD`, which the commit clears; a
+    /// conflict stops there as a revert in progress. A merge is undone
+    /// against its first parent, as History shows it.
+    public func revert(_ commit: Commit) async throws -> OperationOutput {
+        try Self.requireArgument(commit.oid)
+        return try await write(["revert", "--no-commit"] + (commit.isMerge ? ["-m", "1"] : []) + [commit.oid])
+    }
+
+    /// Moves the current branch (or a detached HEAD) to `oid`. `.hard` also
+    /// throws away every uncommitted change to tracked files: the caller
+    /// stashes them first.
+    public func reset(to oid: String, mode: ResetMode) async throws -> OperationOutput {
+        try Self.requireArgument(oid)
+        return try await write(["reset", "--\(mode.rawValue)", oid])
     }
 
     /// Throws away the merge, rebase, cherry-pick, revert or bisect in progress.

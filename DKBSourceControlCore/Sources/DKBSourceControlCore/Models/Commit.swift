@@ -61,6 +61,17 @@ public struct CommitFileChange: Sendable, Equatable, Identifiable {
     public var id: String { path }
 }
 
+/// A commit of one file's history, with the file as that commit changed
+/// it: its name then, and the one before a rename.
+public struct FileRevision: Sendable, Equatable, Identifiable {
+    public let commit: Commit
+    /// nil when git shows no change for it (a merge that took the file
+    /// from its first parent).
+    public internal(set) var file: CommitFileChange?
+
+    public var id: String { commit.oid }
+}
+
 /// A branch or tag shown next to a commit in History.
 public struct CommitRef: Sendable, Hashable {
     public enum Kind: Sendable, Hashable {
