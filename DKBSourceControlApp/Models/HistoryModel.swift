@@ -6,8 +6,9 @@ import Observation
 /// History of one repository (plan F6): commits newest first, 200 at a
 /// time, searched by message, author or path through git itself, or the
 /// history of one file; the selected commit's files and the diff of one of
-/// them; any branch's history; reverting, cherry-picking or checking out a
-/// commit and resetting the branch to one.
+/// them; any branch's history, or every branch's, drawn as a graph;
+/// reverting, cherry-picking or checking out a commit and resetting the
+/// branch to one.
 @MainActor
 @Observable
 final class HistoryModel {
@@ -15,8 +16,21 @@ final class HistoryModel {
         case message, author, path
     }
 
+    /// Whose history the list shows.
+    enum Revision: Hashable {
+        case head
+        case branch(String)
+        /// Every local and remote branch and tag, and HEAD.
+        case allBranches
+    }
+
     unowned let model: RepositoryModel
     private(set) var commits: [Commit] = []
+    /// Each commit's row of the graph, by SHA; empty while searching or in
+    /// a file's history, where the list leaves commits out.
+    private(set) var graph: [String: CommitGraph.Row] = [:]
+    /// The widest row, so every row's graph takes the same width.
+    private(set) var graphWidth = 0
     private(set) var isLoading = false
     private(set) var reachedEnd = false
     private(set) var loadError: Error?
@@ -35,8 +49,7 @@ final class HistoryModel {
     /// The file whose history the list shows instead of every commit,
     /// followed through renames (plan: history actions §3.3).
     private(set) var filePath: String?
-    /// The branch whose history is shown; nil for HEAD's.
-    var revision: String?
+    var revision: Revision = .head
     /// The commit Reset… was asked for, while its sheet is up.
     var pendingReset: Commit?
     /// Create Branch Here… and Create Tag Here…, while their alerts are up.
@@ -58,7 +71,7 @@ final class HistoryModel {
         let search: String
         let scope: SearchScope
         let file: String?
-        let revision: String?
+        let revision: Revision
     }
 
     init(model: RepositoryModel) {
@@ -101,13 +114,15 @@ final class HistoryModel {
             let text = query.search.isEmpty ? nil : query.search
             let page: [Commit]
             var changes: [String: CommitFileChange] = [:]
+            // A file's history is HEAD's when every branch is shown.
+            let branch = if case .branch(let name) = query.revision { name } else { "HEAD" }
             if let file = query.file {
-                let revisions = try await model.repository.fileHistory(path: file, revision: query.revision ?? "HEAD",
-                                                                       limit: limit, skip: skip)
+                let revisions = try await model.repository.fileHistory(path: file, revision: branch, limit: limit, skip: skip)
                 page = revisions.map(\.commit)
                 for revision in revisions { changes[revision.id] = revision.file }
             } else {
-                page = try await model.repository.log(revision: query.revision ?? "HEAD", path: query.scope == .path ? text : nil,
+                page = try await model.repository.log(revision: branch, allBranches: query.revision == .allBranches,
+                                                      path: query.scope == .path ? text : nil,
                                                       grep: query.scope == .message ? text : nil,
                                                       author: query.scope == .author ? text : nil,
                                                       limit: limit, skip: skip)
@@ -115,6 +130,9 @@ final class HistoryModel {
             guard current == generation else { return }
             fileChanges = skip == 0 ? changes : fileChanges.merging(changes) { $1 }
             commits = skip == 0 ? page : commits + page
+            let rows = query.file == nil && text == nil ? CommitGraph.layout(commits) : []
+            graph = Dictionary(uniqueKeysWithValues: zip(commits.map(\.oid), rows))
+            graphWidth = rows.map(\.width).max() ?? 0
             if let pendingSelection, commits.contains(where: { $0.oid == pendingSelection }) {
                 selection = pendingSelection
                 self.pendingSelection = nil
@@ -229,7 +247,7 @@ final class HistoryModel {
 
     /// A branch's history, from its menu in Branches.
     func showHistory(of branch: Branch) {
-        revision = branch.isHead ? nil : branch.name
+        revision = branch.isHead ? .head : .branch(branch.name)
         filePath = nil
         model.tab = .history
     }

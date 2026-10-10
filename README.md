@@ -47,7 +47,8 @@ is in [`docs/dkb-source-control-build-plan.md`](docs/dkb-source-control-build-pl
   commit. Drafts are kept per repository across launches.
 - **History** (⌘2): 200 commits at a time, refs by kind, search by message,
   author or path, each commit's files (list or tree) and diff, copy SHA or
-  message, open on GitHub, reuse a message. Any branch's history, or one
+  message, open on GitHub, reuse a message. A graph of branches and merges
+  beside the commits. Any branch's history, every branch's at once, or one
   file's, followed through renames. A commit's menu checks it out, branches
   or tags it, cherry-picks it from another branch, reverts it (staged, with
   the message finished in the composer) or resets the branch to it (Soft,
@@ -72,7 +73,7 @@ is in [`docs/dkb-source-control-build-plan.md`](docs/dkb-source-control-build-pl
 
 ![History with a commit's message, files and diff](docs/screenshots/history.png)
 
-**Not here, on purpose:** rebase, a conflict editor and the commit graph. A
+**Not here, on purpose:** rebase and a conflict editor. A
 merge, cherry-pick, revert or rebase in progress is shown with an Abort button
 and a way to open the repository in Sourcetree; Open In also offers Finder,
 Terminal and the installed editors.

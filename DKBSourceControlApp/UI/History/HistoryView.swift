@@ -20,7 +20,7 @@ struct HistoryView: View {
         let search: String
         let scope: HistoryModel.SearchScope
         let file: String?
-        let revision: String?
+        let revision: HistoryModel.Revision
     }
 
     var body: some View {
@@ -108,19 +108,20 @@ struct HistoryView: View {
         }
     }
 
-    /// Whose history: HEAD's, or any local or remote branch's.
+    /// Whose history: HEAD's, every branch's, or any local or remote branch's.
     private var branchPicker: some View {
         let branches = history.model.branches
         return Picker("Branch", selection: $history.revision) {
-            Text(verbatim: history.model.status?.head.branch ?? "HEAD").tag(String?.none)
+            Text(verbatim: history.model.status?.head.branch ?? "HEAD").tag(HistoryModel.Revision.head)
+            Text("All Branches").tag(HistoryModel.Revision.allBranches)
             Divider()
-            ForEach(branches.local.filter { !$0.isHead }) { Text(verbatim: $0.name).tag(String?.some($0.name)) }
+            ForEach(branches.local.filter { !$0.isHead }) { Text(verbatim: $0.name).tag(HistoryModel.Revision.branch($0.name)) }
             Divider()
-            ForEach(branches.remote) { Text(verbatim: $0.name).tag(String?.some($0.name)) }
+            ForEach(branches.remote) { Text(verbatim: $0.name).tag(HistoryModel.Revision.branch($0.name)) }
         }
         .labelsHidden()
         .frame(maxWidth: 130)
-        .help("Whose history: the current branch's or another branch's")
+        .help("Whose history: the current branch's, every branch's, or another branch's")
     }
 
     private func present(_ keyPath: ReferenceWritableKeyPath<HistoryModel, Commit?>) -> Binding<Bool> {
@@ -142,7 +143,7 @@ struct HistoryView: View {
     private var list: some View {
         List(selection: $history.selection) {
             ForEach(history.commits) { commit in
-                CommitRow(commit: commit)
+                CommitRow(commit: commit, graph: history.graph[commit.oid], graphWidth: history.graphWidth)
                     .tag(commit.oid)
                     .contextMenu { CommitMenuItems(history: history, commit: commit) }
             }
@@ -172,9 +173,12 @@ struct HistoryView: View {
     }
 }
 
-/// SHA, title, refs, author and when; a merge is marked.
+/// SHA, title, refs, author and when; a merge is marked. The graph on
+/// its left, when the list has one.
 private struct CommitRow: View {
     let commit: Commit
+    let graph: CommitGraph.Row?
+    let graphWidth: Int
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
@@ -205,6 +209,71 @@ private struct CommitRow: View {
             .foregroundStyle(.secondary)
         }
         .padding(.vertical, 2)
+        .padding(.leading, graph == nil ? 0 : GraphCell.width(of: graphWidth) + 4)
+        .background(alignment: .leading) {
+            if let graph {
+                GraphCell(row: graph, lanes: graphWidth,
+                          isHead: commit.decorations.contains { $0.kind == .head || $0.kind == .detachedHead })
+            }
+        }
+    }
+}
+
+/// A commit's row of the graph: the lines from the row above, the commit's
+/// dot at the height of its SHA, and the lines down to its parents. HEAD's
+/// dot has a ring. White on a selected row, as the SHA is.
+private struct GraphCell: View {
+    let row: CommitGraph.Row
+    let lanes: Int
+    let isHead: Bool
+    @Environment(\.backgroundProminence) private var prominence
+
+    private static let lane: CGFloat = 14
+    /// Wider than this, the lanes on the right are cut off.
+    private static let maxLanes = 8
+    /// How far the lines reach past the row, across the list's spacing
+    /// between rows, so they join the next row's.
+    private static let overhang: CGFloat = 8
+    /// The middle of the row's first line, below the row's top.
+    private static let dotY: CGFloat = 11
+    private static let colors: [Color] = [.blue, .orange, .green, .purple, .pink, .teal, .red, .indigo, .mint, .brown]
+
+    static func width(of lanes: Int) -> CGFloat {
+        CGFloat(min(lanes, maxLanes)) * lane
+    }
+
+    var body: some View {
+        let selected = prominence == .increased
+        Canvas { context, size in
+            let top = Self.overhang, bottom = size.height - Self.overhang, dot = top + Self.dotY
+            func x(_ lane: Int) -> CGFloat { (CGFloat(lane) + 0.5) * Self.lane }
+            func color(_ index: Int) -> GraphicsContext.Shading {
+                .color(selected ? .white : Self.colors[index % Self.colors.count])
+            }
+            for line in row.lines {
+                let (from, to) = line.half == .upper ? (top, dot) : (dot, bottom)
+                let start = CGPoint(x: x(line.from), y: from), end = CGPoint(x: x(line.to), y: to)
+                var path = Path()
+                // Straight past the row's edge, where the next row's line runs too.
+                if line.half == .upper { path.move(to: CGPoint(x: start.x, y: 0)); path.addLine(to: start) } else { path.move(to: start) }
+                let middle = (from + to) / 2
+                path.addCurve(to: end, control1: CGPoint(x: start.x, y: middle), control2: CGPoint(x: end.x, y: middle))
+                if line.half == .lower { path.addLine(to: CGPoint(x: end.x, y: size.height)) }
+                context.stroke(path, with: color(line.color), lineWidth: 2)
+            }
+            let center = CGPoint(x: x(row.lane), y: dot)
+            let radius: CGFloat = isHead ? 3 : 4
+            context.fill(Path(ellipseIn: CGRect(x: center.x - radius, y: center.y - radius, width: radius * 2, height: radius * 2)),
+                         with: color(row.color))
+            if isHead {
+                context.stroke(Path(ellipseIn: CGRect(x: center.x - 5.5, y: center.y - 5.5, width: 11, height: 11)),
+                               with: color(row.color), lineWidth: 1.5)
+            }
+        }
+        .frame(width: Self.width(of: lanes))
+        .clipped()
+        .padding(.vertical, -Self.overhang)
+        .accessibilityHidden(true)
     }
 }
 
@@ -284,14 +353,15 @@ struct CommitMenuItems: View {
                 .disabled(busy)
             Button("Create Tag Here…") { history.pendingTag = commit }
             Divider()
-            if history.revision != nil, let branch = status.head.branch {
+            if history.revision != .head, let branch = status.head.branch {
                 Button("Cherry-pick into “\(branch)”") { Task { await history.cherryPick(commit) } }
                     .disabled(blocked)
                     .help(reason ?? "Commit this commit's changes again on the current branch, with its message")
             }
-            // Another branch's commit is picked, not reverted. Staged changes
-            // would end up in the revert's commit.
-            if history.revision == nil {
+            // In another branch's history, or every branch's, a commit is
+            // picked, not reverted. Staged changes would end up in the
+            // revert's commit.
+            if history.revision == .head {
                 Button("Revert Commit") { Task { await history.revert(commit) } }
                     .disabled(blocked)
                     .help(reason ?? "Stage the opposite of this commit's changes, to commit from Working Copy")

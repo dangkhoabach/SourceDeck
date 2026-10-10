@@ -192,13 +192,35 @@ import Testing
                      + "&& git add f.txt && git commit -qm 'feature f' && git switch -q main", in: url)
         await model.refresh()
         let history = model.history
-        history.revision = "feature"
+        history.revision = .branch("feature")
         await history.reload()
         #expect(history.commits.map(\.message) == ["feature f", "one"])
 
         await history.cherryPick(history.commits[0])
         #expect(model.status?.head.branch == "main" && model.lastCommit?.message == "feature f")
         #expect(FileManager.default.fileExists(atPath: url.appendingPathComponent("f.txt").path))
+    }
+
+    /// Every branch's history as a graph: the unmerged branch in a lane of
+    /// its own; no graph while searching, where commits are left out.
+    @Test func everyBranchsHistoryIsDrawnAsAGraphUnlessSearched() async throws {
+        let (model, url) = try await makeModel()
+        defer { try? FileManager.default.removeItem(at: url) }
+        try await sh("echo a > a.txt && git add a.txt && git commit -qm one && git switch -qc feature && echo f > f.txt "
+                     + "&& git add f.txt && git commit -qm 'feature f' && git switch -q main && echo b > a.txt && git commit -qam two",
+                     in: url)
+        await model.refresh()
+        let history = model.history
+        history.revision = .allBranches
+        await history.reload()
+        #expect(Set(history.commits.map(\.message)) == ["two", "feature f", "one"])
+        #expect(history.commits.last?.message == "one" && history.graphWidth == 2)
+        let lanes = history.commits.compactMap { history.graph[$0.oid]?.lane }
+        #expect(lanes.count == 3 && Set(lanes.prefix(2)) == [0, 1] && lanes[2] == 0)
+
+        history.search = "feature"
+        await history.reload()
+        #expect(history.commits.map(\.message) == ["feature f"] && history.graph.isEmpty && history.graphWidth == 0)
     }
 
     /// Checking out a commit with changes asks first, then stashes them.
@@ -319,7 +341,7 @@ import Testing
         #expect(!history.isLoadingFileDiff && history.fileDiff != nil)
 
         // Another branch: the old list is gone at once, not shown as its.
-        history.revision = "other"
+        history.revision = .branch("other")
         let reading = Task { await history.reload() }
         await Task.yield()
         #expect(history.commits.isEmpty && history.isLoading)

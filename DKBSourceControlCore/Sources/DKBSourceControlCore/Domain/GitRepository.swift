@@ -150,15 +150,19 @@ public actor GitRepository {
 
     /// Newest first. `grep` and `author` match literally, case-insensitively.
     /// A branch with no commit yet has no history rather than an error.
-    public func log(revision: String = "HEAD", path: String? = nil, grep: String? = nil, author: String? = nil,
-                    limit: Int = 200, skip: Int = 0) async throws -> [Commit] {
+    /// `allBranches` reads every local and remote branch, every tag and
+    /// HEAD instead of `revision`.
+    public func log(revision: String = "HEAD", allBranches: Bool = false, path: String? = nil, grep: String? = nil,
+                    author: String? = nil, limit: Int = 200, skip: Int = 0) async throws -> [Commit] {
         try Self.requireArgument(revision)
         // Full ref names, so a local branch can be told from a remote one.
         var arguments = ["log", "-z", "--decorate=full", LogParser.format, "--max-count=\(limit)", "--skip=\(skip)"]
+        // Unfiltered, the list is drawn as a graph: each commit before its parents.
+        if path == nil, grep == nil, author == nil { arguments.append("--date-order") }
         if grep != nil || author != nil { arguments += ["--fixed-strings", "--regexp-ignore-case"] }
         if let grep { arguments.append("--grep=\(grep)") }
         if let author { arguments.append("--author=\(author)") }
-        arguments.append(revision)
+        arguments += allBranches ? ["--branches", "--remotes", "--tags", "HEAD"] : [revision]
         if let path { arguments = [Self.literal] + arguments + ["--", path] }
         do {
             return LogParser.parse(try await run(arguments, readOnly: true).stdout)

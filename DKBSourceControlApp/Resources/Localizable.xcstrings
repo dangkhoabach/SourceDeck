@@ -350,6 +350,16 @@
         }
       }
     },
+    "All Branches" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tất cả branch"
+          }
+        }
+      }
+    },
     "Already in the list" : {
       "localizations" : {
         "vi" : {
@@ -4455,12 +4465,12 @@
         }
       }
     },
-    "Whose history: the current branch's or another branch's" : {
+    "Whose history: the current branch's, every branch's, or another branch's" : {
       "localizations" : {
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Xem lịch sử của branch hiện tại hoặc branch khác"
+            "value" : "Xem lịch sử của branch hiện tại, tất cả branch hoặc branch khác"
           }
         }
       }
