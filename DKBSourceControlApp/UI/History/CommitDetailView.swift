@@ -45,8 +45,8 @@ struct CommitDetailView: View {
                         }
                     }
                     .contextMenu(forSelectionType: String.self) { paths in
-                        if paths.count == 1, let path = paths.first {
-                            Button("Show File History") { history.showHistory(of: path) }
+                        if paths.count == 1, let file = history.files.first(where: { $0.path == paths.first }) {
+                            CommitFileMenuItems(history: history, commit: commit, file: file)
                         }
                     }
                 }
@@ -102,6 +102,32 @@ struct CommitDetailView: View {
                 CommitFileRow(file: file, showsFolder: false)
                     .treeIndent(depth)
             }
+        }
+    }
+}
+
+/// A file of a commit: its history and blame; this version of it compared
+/// with the working copy, opened, saved or put back in it. A deleted file
+/// has no version at the commit.
+private struct CommitFileMenuItems: View {
+    let history: HistoryModel
+    let commit: Commit
+    let file: CommitFileChange
+
+    var body: some View {
+        Button("Show File History") { history.showHistory(of: file.path) }
+        if file.change != .deleted {
+            Button("Blame") { history.model.inspection = .blame(path: file.path, commit: commit) }
+            Button("Compare with Working Copy") { history.model.inspection = .compare(file, commit: commit) }
+            Divider()
+            Button("Open This Version") { Task { await history.open(file, at: commit) } }
+            Button("Save This Version As…") { Task { await history.save(file, at: commit) } }
+            // Never over a change of the user's.
+            let changed = history.model.status?.entries.contains { $0.path == file.path } != false
+            Button("Restore This Version") { Task { await history.restore(file, from: commit) } }
+                .disabled(changed)
+                .help(changed ? "The file has uncommitted changes. Commit, stash or discard them first."
+                      : "Put this version of the file in the working copy, not staged")
         }
     }
 }

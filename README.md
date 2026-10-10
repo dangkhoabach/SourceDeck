@@ -44,9 +44,17 @@ is in [`docs/dkb-source-control-build-plan.md`](docs/dkb-source-control-build-pl
   commit. Drafts are kept per repository across launches.
 - **History** (⌘2): 200 commits at a time, refs by kind, search by message,
   author or path, each commit's files (list or tree) and diff, copy SHA or
-  message, open on GitHub, reuse a message.
+  message, open on GitHub, reuse a message. Any branch's history, or one
+  file's, followed through renames. A commit's menu checks it out, branches
+  or tags it, cherry-picks it from another branch, reverts it (staged, with
+  the message finished in the composer) or resets the branch to it (Soft,
+  Mixed, or Hard after stashing every change). A file's menu shows its
+  history, its blame, or that version compared with the working copy,
+  opened, saved or restored.
 - **Branches** (⌘3): switch (stashing changes first when asked), create from
-  HEAD, delete merged branches, stash, pop and drop.
+  HEAD, merge into the current branch (a fast-forward when possible,
+  otherwise staged for the composer), rename, delete merged branches; stash,
+  look inside a stash, apply, pop and drop; tags made, pushed and deleted.
 - **Fetch, Pull, Push** with git's own output in a log (⌥⌘L) and a one-line
   explanation of each failure. A branch that was never published asks before
   its first push.
@@ -61,8 +69,8 @@ is in [`docs/dkb-source-control-build-plan.md`](docs/dkb-source-control-build-pl
 
 ![History with a commit's message, files and diff](docs/screenshots/history.png)
 
-**Not in v1, on purpose:** merge, rebase, cherry-pick, a conflict editor and
-the commit graph. A merge or rebase in progress is shown with an Abort button
+**Not here, on purpose:** rebase, a conflict editor and the commit graph. A
+merge, cherry-pick, revert or rebase in progress is shown with an Abort button
 and a way to open the repository in Sourcetree; Open In also offers Finder,
 Terminal and the installed editors.
 
@@ -70,8 +78,10 @@ Terminal and the installed editors.
 
 - Nothing is thrown away without a confirmation that names the files.
   Untracked and newly added files that are discarded go to the Trash.
-- No force push, no hard reset, no `git clean`, no `branch -D`; the app never
-  edits `.gitconfig` and never commits, pushes or creates a branch on its own.
+- No force push, no `git clean`, no `branch -D`. A hard reset only comes from
+  Reset to Here › Hard, asked twice, with every change stashed first. The app
+  never edits `.gitconfig` and never commits, pushes or creates a branch on its
+  own; a revert or merge it starts waits for the composer's commit.
 - Hooks run on every commit (`--no-verify` is never used).
 - git never prompts: missing credentials fail at once with git's own message,
   and the app asks instead (HTTPS). The account goes to git's own credential

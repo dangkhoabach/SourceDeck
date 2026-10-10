@@ -19,6 +19,8 @@ public enum DiffArea: Sendable, Equatable {
     case untracked
     /// What a commit changed against its first parent.
     case commit(String)
+    /// The work tree against a commit.
+    case workingCopy(since: String)
 }
 
 /// How a diff is shown (plan F3). Only the default makes patches for
@@ -135,6 +137,17 @@ public actor GitRepository {
         BranchParser.parse(try await run(BranchParser.arguments, readOnly: true).stdout)
     }
 
+    public func tags() async throws -> [Tag] {
+        TagParser.parse(try await run(TagParser.arguments, readOnly: true).stdout)
+    }
+
+    /// Whether HEAD is already in `branch`'s history, so merging it only
+    /// moves the branch forward.
+    public func canFastForward(to branch: String) async throws -> Bool {
+        try Self.requireArgument(branch)
+        return try await run(["merge-base", "--is-ancestor", "HEAD", branch], readOnly: true, allowedExitCodes: [0, 1]).succeeded
+    }
+
     /// Newest first. `grep` and `author` match literally, case-insensitively.
     /// A branch with no commit yet has no history rather than an error.
     public func log(revision: String = "HEAD", path: String? = nil, grep: String? = nil, author: String? = nil,
@@ -161,12 +174,13 @@ public actor GitRepository {
     ///
     /// `--skip` with `--follow` skips commits before keeping the file's
     /// (git 2.54), so a later page reads the earlier ones again and drops them.
-    public func fileHistory(path: String, limit: Int = 200, skip: Int = 0) async throws -> [FileRevision] {
+    public func fileHistory(path: String, revision: String = "HEAD", limit: Int = 200, skip: Int = 0) async throws -> [FileRevision] {
+        try Self.requireArgument(revision)
         let arguments = [Self.literal, "log", "-z", "--follow", "--name-status", "-M", Self.firstParent, "--decorate=full",
-                         FileHistoryParser.format, "--max-count=\(skip + limit)", "HEAD", "--", path]
+                         FileHistoryParser.format, "--max-count=\(skip + limit)", revision, "--", path]
         do {
             return Array(FileHistoryParser.parse(try await run(arguments, readOnly: true).stdout).dropFirst(skip))
-        } catch let error as GitCommandError {
+        } catch let error as GitCommandError where revision == "HEAD" {
             if try await hasHead() { throw error }
             return []
         }
@@ -181,6 +195,21 @@ public actor GitRepository {
                 .trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
         }
         return (try await count(["\(oid)..HEAD"]), try await count(["\(oid)..HEAD", "--not", "--remotes"]))
+    }
+
+    /// Who last changed each line of `path`: as it is in the working copy,
+    /// or at `oid`. Lines changed in the working copy aren't committed.
+    public func blame(path: String, at oid: String? = nil) async throws -> [BlameLine] {
+        if let oid { try Self.requireArgument(oid) }
+        let arguments = [Self.literal, "blame", "--porcelain"] + (oid.map { [$0] } ?? []) + ["--", path]
+        return BlameParser.parse(try await run(arguments, readOnly: true).stdoutText)
+    }
+
+    /// The file as it was at `oid`, byte for byte: no filters, no text
+    /// conversion.
+    public func fileContents(_ path: String, at oid: String) async throws -> Data {
+        try Self.requireArgument(oid)
+        return try await run(["cat-file", "blob", "\(oid):\(path)"], readOnly: true).stdout
     }
 
     /// Files a commit changed; a merge is compared with its first parent.
@@ -210,6 +239,9 @@ public actor GitRepository {
         case .commit(let oid):
             try Self.requireArgument(oid)
             arguments = [Self.literal, "show", "--format=", Self.firstParent] + diffOptions + [oid, "--"] + paths
+        case .workingCopy(let oid):
+            try Self.requireArgument(oid)
+            arguments = [Self.literal, "diff"] + diffOptions + [oid, "--"] + paths
         }
         let result = try await run(arguments, readOnly: true, allowedExitCodes: allowed)
         return DiffParser.parse(result.stdoutText).first
@@ -244,6 +276,19 @@ public actor GitRepository {
     public func stashes() async throws -> [Stash] {
         StashParser.parse(try await run(StashParser.arguments, readOnly: true).stdout)
     }
+
+    /// What a stash holds: changes to tracked files, read as `.commit` of
+    /// the stash, and untracked files, as `.commit` of `untrackedRevision`.
+    public func stashFiles(_ stash: Stash) async throws -> (tracked: [CommitFileChange], untracked: [CommitFileChange]) {
+        let untracked = Self.untrackedRevision(of: stash)
+        let hasUntracked = try await run(["rev-parse", "--quiet", "--verify", untracked], readOnly: true,
+                                         allowedExitCodes: [0, 1]).succeeded
+        return (try await commitFiles(stash.ref), hasUntracked ? try await commitFiles(untracked) : [])
+    }
+
+    /// `git stash push --include-untracked` keeps untracked files in the
+    /// stash's third parent, a commit of only them.
+    public static func untrackedRevision(of stash: Stash) -> String { stash.ref + "^3" }
 
     /// nil when the repository has no remote of that name.
     public func remoteURL(_ name: String = "origin") async throws -> RemoteURL? {
@@ -333,9 +378,60 @@ public actor GitRepository {
         return try await write(["switch", name])
     }
 
-    public func createBranch(_ name: String) async throws -> OperationOutput {
+    /// Created at `start` (HEAD when nil) and switched to.
+    public func createBranch(_ name: String, at start: String? = nil) async throws -> OperationOutput {
         try Self.requireArgument(name)
-        return try await write(["switch", "-c", name])
+        if let start { try Self.requireArgument(start) }
+        return try await write(["switch", "-c", name] + (start.map { [$0] } ?? []))
+    }
+
+    /// HEAD on `oid` with no branch. Changes come along unless they clash,
+    /// when git refuses.
+    public func checkout(_ oid: String) async throws -> OperationOutput {
+        try Self.requireArgument(oid)
+        return try await write(["switch", "--detach", oid])
+    }
+
+    /// Lightweight without a message; annotated with one, given on stdin.
+    public func createTag(_ name: String, at oid: String, message: String = "") async throws -> OperationOutput {
+        try Self.requireArgument(name)
+        try Self.requireArgument(oid)
+        if message.isEmpty { return try await write(["tag", name, oid]) }
+        return try await write(["tag", "-a", name, "-F", "-", oid], stdin: Data(message.utf8))
+    }
+
+    /// `commit` applied on top of HEAD as a new commit with its message.
+    /// Not `--no-commit`: a conflict then leaves no cherry-pick in progress
+    /// to abort (git 2.54). A conflict stops with `CHERRY_PICK_HEAD`.
+    public func cherryPick(_ commit: Commit) async throws -> OperationOutput {
+        try Self.requireArgument(commit.oid)
+        return try await write(["cherry-pick"] + (commit.isMerge ? ["-m", "1"] : []) + [commit.oid])
+    }
+
+    /// Fast-forward only when it can; otherwise the merge is staged and not
+    /// committed (`MERGE_HEAD`), for the composer to commit in git-rule
+    /// form, never git's "Merge branch …". A conflict stops there too.
+    public func merge(_ branch: String, fastForward: Bool) async throws -> OperationOutput {
+        try Self.requireArgument(branch)
+        return try await write(["merge"] + (fastForward ? ["--ff-only"] : ["--no-commit", "--no-ff"]) + [branch])
+    }
+
+    public func renameBranch(_ name: String, to newName: String) async throws -> OperationOutput {
+        try Self.requireArgument(name)
+        try Self.requireArgument(newName)
+        return try await write(["branch", "-m", name, newName])
+    }
+
+    /// Local only: a tag on the remote stays there.
+    public func deleteTag(_ name: String) async throws -> OperationOutput {
+        try Self.requireArgument(name)
+        return try await write(["tag", "-d", name])
+    }
+
+    /// One tag to origin, or every tag when `name` is nil. Never forced.
+    public func pushTag(_ name: String?) async throws -> OperationOutput {
+        if let name { try Self.requireArgument(name) }
+        return try await write(["push", "origin", name.map { "refs/tags/\($0)" } ?? "--tags"], timeout: Self.networkTimeout)
     }
 
     /// `-d` only: git refuses to delete a branch whose commits exist nowhere else.
@@ -348,6 +444,11 @@ public actor GitRepository {
     /// ("WIP on main: …").
     public func stashPush(message: String) async throws -> OperationOutput {
         try await write(["stash", "push", "--include-untracked"] + (message.isEmpty ? [] : ["--message=\(message)"]))
+    }
+
+    /// Like pop, but the stash stays.
+    public func stashApply(_ stash: Stash) async throws -> OperationOutput {
+        try await write(["stash", "apply", stash.ref])
     }
 
     public func stashPop(_ stash: Stash) async throws -> OperationOutput {
@@ -374,6 +475,13 @@ public actor GitRepository {
     public func reset(to oid: String, mode: ResetMode) async throws -> OperationOutput {
         try Self.requireArgument(oid)
         return try await write(["reset", "--\(mode.rawValue)", oid])
+    }
+
+    /// The working copy's `path` as it was at `oid`, not staged. The caller
+    /// makes sure the file has no uncommitted change, which this replaces.
+    public func restore(_ path: String, from oid: String) async throws -> OperationOutput {
+        try Self.requireArgument(oid)
+        return try await write([Self.literal, "restore", "--source=\(oid)", "--worktree", "--", path])
     }
 
     /// Throws away the merge, rebase, cherry-pick, revert or bisect in progress.

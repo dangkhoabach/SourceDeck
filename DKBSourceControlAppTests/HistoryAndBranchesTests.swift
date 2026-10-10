@@ -182,4 +182,115 @@ import Testing
         await history.reload()
         #expect(history.commits.map(\.message) == ["rename", "other", "add a"])
     }
+
+    /// docs/history-actions-plan.md §3.4: another branch's history, and a
+    /// commit of it picked into the current one.
+    @Test func anotherBranchsCommitIsCherryPickedIntoTheCurrentOne() async throws {
+        let (model, url) = try await makeModel()
+        defer { try? FileManager.default.removeItem(at: url) }
+        try await sh("echo a > a.txt && git add a.txt && git commit -qm one && git switch -qc feature && echo f > f.txt "
+                     + "&& git add f.txt && git commit -qm 'feature f' && git switch -q main", in: url)
+        await model.refresh()
+        let history = model.history
+        history.revision = "feature"
+        await history.reload()
+        #expect(history.commits.map(\.message) == ["feature f", "one"])
+
+        await history.cherryPick(history.commits[0])
+        #expect(model.status?.head.branch == "main" && model.lastCommit?.message == "feature f")
+        #expect(FileManager.default.fileExists(atPath: url.appendingPathComponent("f.txt").path))
+    }
+
+    /// Checking out a commit with changes asks first, then stashes them.
+    @Test func checkingOutACommitStashesFirstAndABranchStartsThere() async throws {
+        let (model, url) = try await makeModel()
+        defer { try? FileManager.default.removeItem(at: url) }
+        try await sh("echo 1 > a.txt && git add a.txt && git commit -qm one && echo 2 > a.txt && git commit -qam two && echo 3 > a.txt", in: url)
+        await model.refresh()
+        let history = model.history
+        await history.reload()
+        let one = try #require(history.commits.last)
+
+        await history.requestCheckout(one)
+        #expect(history.pendingCheckout == one && model.status?.head.oid != one.oid)
+        await history.checkout(one, stashingFirst: true)
+        #expect(model.status?.head.isDetached == true && model.status?.head.oid == one.oid && model.status?.isClean == true)
+        #expect(try await model.repository.stashes().first?.message.contains("Before checking out \(one.shortOID)") == true)
+
+        #expect(await model.branches.create("fix", at: one))
+        #expect(model.status?.head.branch == "fix" && model.status?.head.oid == one.oid)
+    }
+
+    /// docs/history-actions-plan.md §3.5: a version put back in the working
+    /// copy, and a line's commit from Blame selected in the file's history.
+    @Test func anOlderVersionIsRestoredAndBlameShowsALinesCommit() async throws {
+        let (model, url) = try await makeModel()
+        defer { try? FileManager.default.removeItem(at: url) }
+        try await sh("echo old > a.txt && git add a.txt && git commit -qm first && echo x > b.txt && git add b.txt "
+                     + "&& git commit -qm other && echo new > a.txt && git commit -qam second", in: url)
+        await model.refresh()
+        let history = model.history
+        await history.reload()
+        let first = try #require(history.commits.last)
+        model.tab = .history
+
+        history.selection = first.oid
+        await history.loadFiles()
+        await history.restore(try #require(history.files.first), from: first)
+        #expect(model.tab == .workingCopy && model.status?.unstagedCount == 1)
+        #expect(try String(contentsOf: url.appendingPathComponent("a.txt"), encoding: .utf8) == "old\n")
+
+        let line = try #require(try await model.repository.blame(path: "a.txt", at: first.oid).first)
+        history.showCommit(line.oid, inHistoryOf: "a.txt")
+        await history.reload()
+        #expect(model.tab == .history && history.commits.map(\.message) == ["second", "first"])
+        #expect(history.selection == first.oid)
+    }
+
+    /// docs/history-actions-plan.md §3.6: a merge that can't fast-forward
+    /// waits for the composer; rename and tags.
+    @Test func aMergeWaitsForTheComposerAndBranchesAreRenamedAndTagged() async throws {
+        let (model, url) = try await makeModel()
+        defer { try? FileManager.default.removeItem(at: url) }
+        try await sh("echo a > a.txt && git add a.txt && git commit -qm one && git switch -qc feature && echo f > f.txt "
+                     + "&& git add f.txt && git commit -qm feature && git switch -q main && echo b > b.txt && git add b.txt "
+                     + "&& git commit -qm main", in: url)
+        await model.refresh()
+        let branches = model.branches
+        await branches.load()
+        let feature = try #require(branches.local.first { $0.name == "feature" })
+
+        await branches.merge(feature)
+        #expect(model.tab == .workingCopy && model.status?.state == .merging)
+        #expect(model.composer.draft.message == "+ Update +\n - Merge feature into main")
+        await model.composer.commit(push: false)
+        #expect(model.status?.state == .normal && model.lastCommit?.isMerge == true)
+
+        await branches.rename(feature, to: "done")
+        let head = try #require(model.lastCommit)
+        await branches.createTag("v1", message: "", at: head)
+        await branches.load()
+        #expect(branches.local.map(\.name).sorted() == ["done", "main"] && branches.tags.map(\.name) == ["v1"])
+        await branches.deleteTag(branches.tags[0])
+        await branches.load()
+        #expect(branches.tags.isEmpty)
+        model.saveDraft()
+    }
+
+    /// docs/history-actions-plan.md §3.7: Apply brings the changes back and
+    /// keeps the stash.
+    @Test func applyKeepsTheStash() async throws {
+        let (model, url) = try await makeModel()
+        defer { try? FileManager.default.removeItem(at: url) }
+        try await sh("echo a > a.txt && git add a.txt && git commit -qm one && echo b > a.txt", in: url)
+        await model.refresh()
+        let branches = model.branches
+        await branches.stash(message: "work")
+        await branches.load()
+        #expect(model.status?.isClean == true && branches.stashes.count == 1)
+
+        await branches.apply(branches.stashes[0])
+        await branches.load()
+        #expect(model.status?.unstagedCount == 1 && branches.stashes.count == 1)
+    }
 }

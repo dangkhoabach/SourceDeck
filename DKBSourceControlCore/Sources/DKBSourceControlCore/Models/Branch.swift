@@ -16,6 +16,19 @@ public struct Branch: Sendable, Equatable, Identifiable {
     public var id: String { (isRemote ? "refs/remotes/" : "refs/heads/") + name }
 }
 
+public struct Tag: Sendable, Equatable, Identifiable {
+    /// "v1.0".
+    public let name: String
+    /// The commit it points at.
+    public let oid: String
+    /// When it was made; a lightweight tag's is its commit's.
+    public let date: Date?
+    /// An annotated tag's message, or the commit's for a lightweight one.
+    public let subject: String
+
+    public var id: String { "refs/tags/" + name }
+}
+
 public struct Stash: Sendable, Equatable, Identifiable {
     /// "stash@{0}".
     public let ref: String

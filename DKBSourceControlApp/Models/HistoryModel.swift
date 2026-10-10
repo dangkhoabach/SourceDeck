@@ -1,3 +1,4 @@
+import AppKit
 import DKBSourceControlCore
 import Foundation
 import Observation
@@ -5,7 +6,8 @@ import Observation
 /// History of one repository (plan F6): commits newest first, 200 at a
 /// time, searched by message, author or path through git itself, or the
 /// history of one file; the selected commit's files and the diff of one of
-/// them; reverting a commit and resetting the branch to one.
+/// them; any branch's history; reverting, cherry-picking or checking out a
+/// commit and resetting the branch to one.
 @MainActor
 @Observable
 final class HistoryModel {
@@ -29,8 +31,17 @@ final class HistoryModel {
     /// The file whose history the list shows instead of every commit,
     /// followed through renames (plan: history actions §3.3).
     private(set) var filePath: String?
+    /// The branch whose history is shown; nil for HEAD's.
+    var revision: String?
     /// The commit Reset… was asked for, while its sheet is up.
     var pendingReset: Commit?
+    /// Create Branch Here… and Create Tag Here…, while their alerts are up.
+    var pendingBranch: Commit?
+    var pendingTag: Commit?
+    /// A checkout waiting on uncommitted changes: stash them first, or cancel.
+    var pendingCheckout: Commit?
+    /// Selected once a load brings it in (from Blame).
+    @ObservationIgnored private var pendingSelection: String?
     /// The file as each commit of `filePath`'s history changed it: its name then.
     @ObservationIgnored private var fileChanges: [String: CommitFileChange] = [:]
     @ObservationIgnored private var generation = 0
@@ -43,6 +54,7 @@ final class HistoryModel {
         let search: String
         let scope: SearchScope
         let file: String?
+        let revision: String?
     }
 
     init(model: RepositoryModel) {
@@ -56,7 +68,7 @@ final class HistoryModel {
     /// The first page again, as many commits as were shown (after a commit,
     /// a fetch or a new search). A new search waits for typing to pause.
     func reload() async {
-        let query = Query(search: search.trimmingCharacters(in: .whitespaces), scope: scope, file: filePath)
+        let query = Query(search: search.trimmingCharacters(in: .whitespaces), scope: scope, file: filePath, revision: revision)
         if let loadedQuery, loadedQuery.search != query.search {
             try? await Task.sleep(for: .milliseconds(300))
             guard !Task.isCancelled else { return }
@@ -81,11 +93,12 @@ final class HistoryModel {
             let page: [Commit]
             var changes: [String: CommitFileChange] = [:]
             if let file = query.file {
-                let revisions = try await model.repository.fileHistory(path: file, limit: limit, skip: skip)
+                let revisions = try await model.repository.fileHistory(path: file, revision: query.revision ?? "HEAD",
+                                                                       limit: limit, skip: skip)
                 page = revisions.map(\.commit)
                 for revision in revisions { changes[revision.id] = revision.file }
             } else {
-                page = try await model.repository.log(path: query.scope == .path ? text : nil,
+                page = try await model.repository.log(revision: query.revision ?? "HEAD", path: query.scope == .path ? text : nil,
                                                       grep: query.scope == .message ? text : nil,
                                                       author: query.scope == .author ? text : nil,
                                                       limit: limit, skip: skip)
@@ -93,6 +106,10 @@ final class HistoryModel {
             guard current == generation else { return }
             fileChanges = skip == 0 ? changes : fileChanges.merging(changes) { $1 }
             commits = skip == 0 ? page : commits + page
+            if let pendingSelection, commits.contains(where: { $0.oid == pendingSelection }) {
+                selection = pendingSelection
+                self.pendingSelection = nil
+            }
             reachedEnd = page.count < limit
             loadedQuery = query
             loadError = nil
@@ -140,6 +157,95 @@ final class HistoryModel {
 
     func showAllHistory() {
         filePath = nil
+    }
+
+    /// A line's commit from Blame, in the history of its file.
+    func showCommit(_ oid: String, inHistoryOf path: String) {
+        showHistory(of: path)
+        if commits.contains(where: { $0.oid == oid }) {
+            selection = oid
+        } else {
+            pendingSelection = oid
+        }
+    }
+
+    /// The file as `commit` left it, in the working copy and not staged
+    /// (plan: history actions §3.5). Offered only while the file has no
+    /// uncommitted change, so nothing of the user's is replaced.
+    func restore(_ file: CommitFileChange, from commit: Commit) async {
+        let repository = model.repository
+        let restored = await model.write("git restore --source=\(commit.shortOID) --worktree -- \(file.path)", logsSuccess: true) {
+            try await repository.restore(file.path, from: commit.oid)
+        }
+        if restored { model.tab = .workingCopy }
+    }
+
+    /// A read-only copy in the temp folder, opened with its app.
+    func open(_ file: CommitFileChange, at commit: Commit) async {
+        let repository = model.repository
+        await model.write("git cat-file blob \(commit.shortOID):\(file.path)") {
+            let folder = FileManager.default.temporaryDirectory.appendingPathComponent("DKB Source Control/\(commit.shortOID)", isDirectory: true)
+            let url = folder.appendingPathComponent((file.path as NSString).lastPathComponent)
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            try? FileManager.default.removeItem(at: url)
+            try await repository.fileContents(file.path, at: commit.oid).write(to: url)
+            try FileManager.default.setAttributes([.posixPermissions: 0o444], ofItemAtPath: url.path)
+            NSWorkspace.shared.open(url)
+            return OperationOutput()
+        }
+    }
+
+    /// Saved wherever the user picks.
+    func save(_ file: CommitFileChange, at commit: Commit) async {
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = (file.path as NSString).lastPathComponent
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        let repository = model.repository
+        await model.write("git cat-file blob \(commit.shortOID):\(file.path)") {
+            try await repository.fileContents(file.path, at: commit.oid).write(to: url)
+            return OperationOutput()
+        }
+    }
+
+    /// A branch's history, from its menu in Branches.
+    func showHistory(of branch: Branch) {
+        revision = branch.isHead ? nil : branch.name
+        filePath = nil
+        model.tab = .history
+    }
+
+    /// Staged or modified tracked files would travel along or block the
+    /// checkout, so the user is asked to stash them first, as for a branch.
+    func requestCheckout(_ commit: Commit) async {
+        if let status = model.status, status.stagedCount + status.unstagedCount > 0 {
+            pendingCheckout = commit
+            return
+        }
+        await checkout(commit)
+    }
+
+    func checkout(_ commit: Commit, stashingFirst: Bool = false) async {
+        let repository = model.repository
+        if stashingFirst {
+            let stashed = await model.write("git stash push --include-untracked", logsSuccess: true) {
+                try await repository.stashPush(message: "Before checking out \(commit.shortOID)")
+            }
+            guard stashed else { return }
+        }
+        await model.write("git switch --detach \(commit.shortOID)", logsSuccess: true) { try await repository.checkout(commit.oid) }
+    }
+
+    /// Committed by git with the commit's own message. A conflict stops
+    /// as a cherry-pick in progress; the composer gets that message to
+    /// finish it with once the conflicts are resolved.
+    func cherryPick(_ commit: Commit) async {
+        let repository = model.repository
+        let picked = await model.write("git cherry-pick\(commit.isMerge ? " -m 1" : "") \(commit.shortOID)", logsSuccess: true) {
+            try await repository.cherryPick(commit)
+        }
+        guard !picked, model.status?.state == .cherryPicking else { return }
+        model.composer.use(commit.message)
+        model.tab = .workingCopy
     }
 
     /// The opposite of `commit`, staged; the composer gets a message to

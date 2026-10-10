@@ -51,3 +51,21 @@ enum StashParser {
         }
     }
 }
+
+/// `git for-each-ref refs/tags`, newest first, the same way as branches:
+/// NUL between fields, a newline after each tag. `%(*objectname)` is the
+/// commit an annotated tag points at; a lightweight one is the commit.
+enum TagParser {
+    static let arguments = ["for-each-ref", "--sort=-creatordate",
+                            "--format=%(refname:strip=2)%00%(objectname)%00%(*objectname)%00%(creatordate:iso-strict)%00%(contents:subject)",
+                            "refs/tags"]
+
+    static func parse(_ data: Data) -> [Tag] {
+        String(decoding: data, as: UTF8.self).split(separator: "\n").compactMap { line in
+            let fields = line.split(separator: "\0", omittingEmptySubsequences: false).map(String.init)
+            guard fields.count == 5 else { return nil }
+            return Tag(name: fields[0], oid: fields[2].isEmpty ? fields[1] : fields[2],
+                       date: try? Date(fields[3], strategy: .iso8601), subject: fields[4])
+        }
+    }
+}

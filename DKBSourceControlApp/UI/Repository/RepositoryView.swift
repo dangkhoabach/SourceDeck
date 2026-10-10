@@ -50,6 +50,26 @@ struct RepositoryView: View {
         } message: {
             Text("The branch has no upstream yet. It will be pushed to origin and tracked from now on.")
         }
+        .sheet(item: Bindable(model).inspection) { inspection in
+            Group {
+                switch inspection {
+                case .blame(let path, let commit):
+                    BlameSheet(model: model, path: path, commit: commit)
+                case .stash(let stash):
+                    ChangesSheet(model: model, title: Text(verbatim: stash.message)) { [repository = model.repository] in
+                        let files = try await repository.stashFiles(stash)
+                        let untracked = GitRepository.untrackedRevision(of: stash)
+                        return files.tracked.map { .init(file: $0, area: .commit(stash.ref)) }
+                            + files.untracked.map { .init(file: $0, area: .commit(untracked)) }
+                    }
+                case .compare(let file, let commit):
+                    ChangesSheet(model: model, title: Text("\(file.path): \(commit.shortOID) → Working Copy")) {
+                        [.init(file: file, area: .workingCopy(since: commit.oid))]
+                    }
+                }
+            }
+            .environment(\.locale, AppLocale.current.locale)
+        }
         .sheet(item: Bindable(model).pendingSignIn) { request in
             if let signIn = model.signIn {
                 SignInSheet(request: request, signIn: signIn).environment(\.locale, AppLocale.current.locale)

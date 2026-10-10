@@ -3,14 +3,16 @@ import Foundation
 import Observation
 
 /// Branches and stashes of one repository (plan F7, F8). Just enough to
-/// never be stuck: switch, create from HEAD, delete merged (`-d`), stash,
-/// pop and drop. No merge, rebase or remote deletes.
+/// never be stuck: switch, create from HEAD or a commit, rename, merge into
+/// the current branch, delete merged (`-d`); stash, pop and drop; tags
+/// made, deleted locally and pushed. No rebase or remote deletes.
 @MainActor
 @Observable
 final class BranchesModel {
     unowned let model: RepositoryModel
     private(set) var branches: [Branch] = []
     private(set) var stashes: [Stash] = []
+    private(set) var tags: [Tag] = []
     /// A switch waiting on uncommitted changes: stash them first, or cancel.
     var pendingSwitch: Branch?
 
@@ -24,10 +26,12 @@ final class BranchesModel {
     func load() async {
         async let branches = model.repository.branches()
         async let stashes = model.repository.stashes()
-        let loaded = (try? await branches, try? await stashes)
+        async let tags = model.repository.tags()
+        let loaded = (try? await branches, try? await stashes, try? await tags)
         guard !Task.isCancelled else { return }
         if let branches = loaded.0 { self.branches = branches }
         if let stashes = loaded.1 { self.stashes = stashes }
+        if let tags = loaded.2 { self.tags = tags }
     }
 
     /// Staged or modified tracked files would travel along or block the
@@ -57,13 +61,61 @@ final class BranchesModel {
         await model.write("git switch \(name)", logsSuccess: true) { try await repository.switchBranch(name) }
     }
 
-    /// Created from HEAD and switched to.
+    /// Created from HEAD, or from `commit`, and switched to.
     @discardableResult
-    func create(_ name: String) async -> Bool {
+    func create(_ name: String, at commit: Commit? = nil) async -> Bool {
         let name = name.trimmingCharacters(in: .whitespaces)
         guard !name.isEmpty else { return false }
-        return await model.write("git switch -c \(name)", logsSuccess: true) { [repository = model.repository] in
-            try await repository.createBranch(name)
+        return await model.write("git switch -c \(name)\(commit.map { " \($0.shortOID)" } ?? "")", logsSuccess: true) {
+            [repository = model.repository] in
+            try await repository.createBranch(name, at: commit?.oid)
+        }
+    }
+
+    /// Annotated when it has a message.
+    func createTag(_ name: String, message: String, at commit: Commit) async {
+        let name = name.trimmingCharacters(in: .whitespaces)
+        let message = message.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return }
+        await model.write("git tag\(message.isEmpty ? "" : " -a") \(name) \(commit.shortOID)", logsSuccess: true) {
+            [repository = model.repository] in
+            try await repository.createTag(name, at: commit.oid, message: message)
+        }
+    }
+
+    /// Into the current branch (plan: history actions §3.6): a fast-forward
+    /// when HEAD is behind it; otherwise staged with `MERGE_HEAD`, and the
+    /// composer gets a git-rule message to commit it with.
+    func merge(_ branch: Branch) async {
+        let repository = model.repository
+        let fastForward = (try? await repository.canFastForward(to: branch.name)) ?? false
+        await model.write("git merge \(fastForward ? "--ff-only" : "--no-commit --no-ff") \(branch.name)", logsSuccess: true) {
+            try await repository.merge(branch.name, fastForward: fastForward)
+        }
+        guard model.status?.state == .merging else { return }
+        model.composer.use("+ Update +\n - Merge \(branch.name) into \(model.status?.head.branch ?? "HEAD")")
+        model.tab = .workingCopy
+    }
+
+    func rename(_ branch: Branch, to name: String) async {
+        let name = name.trimmingCharacters(in: .whitespaces)
+        guard !name.isEmpty, name != branch.name else { return }
+        await model.write("git branch -m \(branch.name) \(name)", logsSuccess: true) { [repository = model.repository] in
+            try await repository.renameBranch(branch.name, to: name)
+        }
+    }
+
+    func deleteTag(_ tag: Tag) async {
+        await model.write("git tag -d \(tag.name)", logsSuccess: true) { [repository = model.repository] in
+            try await repository.deleteTag(tag.name)
+        }
+    }
+
+    /// One tag, or all of them when nil.
+    func pushTag(_ tag: Tag?) async {
+        await model.write("git push origin \(tag.map { "refs/tags/\($0.name)" } ?? "--tags")", logsSuccess: true) {
+            [repository = model.repository] in
+            try await repository.pushTag(tag?.name)
         }
     }
 
@@ -77,6 +129,13 @@ final class BranchesModel {
         let message = message.trimmingCharacters(in: .whitespaces)
         await model.write("git stash push --include-untracked", logsSuccess: true) { [repository = model.repository] in
             try await repository.stashPush(message: message)
+        }
+    }
+
+    /// Like pop, but the stash stays.
+    func apply(_ stash: Stash) async {
+        await model.write("git stash apply \(stash.ref)", logsSuccess: true) { [repository = model.repository] in
+            try await repository.stashApply(stash)
         }
     }
 

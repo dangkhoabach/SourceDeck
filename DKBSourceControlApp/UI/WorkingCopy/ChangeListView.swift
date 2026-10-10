@@ -179,6 +179,9 @@ struct ChangeListView: View {
             // A new file has no commits yet.
             if all.count == 1, let entry = all.first, !entry.isUntracked, entry.index != .added {
                 Button("Show File History") { workingCopy.model.history.showHistory(of: entry.originalPath ?? entry.path) }
+                if entry.workTree != .deleted, entry.index != .deleted, entry.index != .renamed {
+                    Button("Blame") { workingCopy.model.inspection = .blame(path: entry.path, commit: nil) }
+                }
             }
         }
         if unstaged.contains(where: \.isUntracked) {

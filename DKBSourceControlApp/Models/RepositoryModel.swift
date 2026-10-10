@@ -12,6 +12,23 @@ final class RepositoryModel: Identifiable {
         case workingCopy, history, branches
     }
 
+    enum Inspection: Identifiable {
+        /// Who last changed each line: in the working copy, or at a commit.
+        case blame(path: String, commit: Commit?)
+        /// What a stash holds, untracked files too.
+        case stash(Stash)
+        /// A commit's version of a file against the working copy.
+        case compare(CommitFileChange, commit: Commit)
+
+        var id: String {
+            switch self {
+            case .blame(let path, let commit): "blame \(commit?.oid ?? "") \(path)"
+            case .stash(let stash): "stash \(stash.ref) \(stash.date.timeIntervalSince1970)"
+            case .compare(let file, let commit): "compare \(commit.oid) \(file.path)"
+            }
+        }
+    }
+
     enum RemoteOperation {
         case fetch, pull, push
 
@@ -43,6 +60,9 @@ final class RepositoryModel: Identifiable {
     var pendingPublish: String?
     /// git stopped for an account: the Sign In sheet shown for it.
     var pendingSignIn: RemoteSignIn.Request?
+    /// A sheet to look at something in, over any tab (plan: history
+    /// actions §3.5, §3.7).
+    var inspection: Inspection?
     var tab: Tab = .workingCopy
     @ObservationIgnored private var remoteLoaded = false
     @ObservationIgnored private var refreshAgain = false

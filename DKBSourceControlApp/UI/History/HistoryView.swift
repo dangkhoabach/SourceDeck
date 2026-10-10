@@ -3,10 +3,13 @@ import DKBSourceControlCore
 import SwiftUI
 
 /// Commits newest first, 200 at a time (plan F6), with search by message,
-/// author or path, or one file's history; the selected commit on the right.
+/// author or path, or one file's history, of HEAD or another branch; the
+/// selected commit on the right.
 struct HistoryView: View {
     @Bindable var history: HistoryModel
     @FocusState private var searchFocused: Bool
+    @State private var newName = ""
+    @State private var tagMessage = ""
 
     /// Anything that changes the list: a commit, a fetch, a new search.
     private struct ReloadKey: Equatable {
@@ -17,6 +20,7 @@ struct HistoryView: View {
         let search: String
         let scope: HistoryModel.SearchScope
         let file: String?
+        let revision: String?
     }
 
     var body: some View {
@@ -36,6 +40,7 @@ struct HistoryView: View {
                             .buttonStyle(.borderless)
                             .help("Show All History")
                     } else {
+                        branchPicker
                         NativeSearchField(text: $history.search, placeholder: String(localized: "Search history", bundle: AppLocale.bundle))
                             .focused($searchFocused)
                         Picker("Search in", selection: $history.scope) {
@@ -68,13 +73,58 @@ struct HistoryView: View {
                 .hidden()
         }
         .task(id: ReloadKey(head: head?.oid, upstream: head?.upstream, ahead: head?.ahead ?? 0, behind: head?.behind ?? 0,
-                            search: history.search, scope: history.scope, file: history.filePath)) {
+                            search: history.search, scope: history.scope, file: history.filePath, revision: history.revision)) {
             await history.reload()
         }
         .task(id: history.selection) { await history.loadFiles() }
+        .task(id: history.model.refreshCount) { await history.model.branches.load() }
         .sheet(item: $history.pendingReset) { commit in
             ResetSheet(history: history, commit: commit).environment(\.locale, AppLocale.current.locale)
         }
+        .alert("Create Branch", isPresented: present(\.pendingBranch), presenting: history.pendingBranch) { commit in
+            TextField("Name", text: $newName)
+            Button("Create") { Task { await history.model.branches.create(newName, at: commit) } }
+            Button("Cancel", role: .cancel) {}
+        } message: { commit in
+            Text("Created at \(commit.shortOID) and switched to. Your changes come along.")
+        }
+        .alert("Create Tag", isPresented: present(\.pendingTag), presenting: history.pendingTag) { commit in
+            TextField("Name", text: $newName)
+            TextField("Message (optional)", text: $tagMessage)
+            Button("Create") { Task { await history.model.branches.createTag(newName, message: tagMessage, at: commit) } }
+            Button("Cancel", role: .cancel) {}
+        } message: { commit in
+            Text("Tags \(commit.shortOID). With a message, the tag is annotated.")
+        }
+        .alert("You have uncommitted changes", isPresented: present(\.pendingCheckout), presenting: history.pendingCheckout) { commit in
+            Button("Stash and Check Out") { Task { await history.checkout(commit, stashingFirst: true) } }
+            Button("Cancel", role: .cancel) {}
+        } message: { commit in
+            Text("Stash them before checking out \(commit.shortOID), or commit them first.")
+        }
+        .onChange(of: [history.pendingBranch?.oid, history.pendingTag?.oid]) {
+            newName = ""
+            tagMessage = ""
+        }
+    }
+
+    /// Whose history: HEAD's, or any local or remote branch's.
+    private var branchPicker: some View {
+        let branches = history.model.branches
+        return Picker("Branch", selection: $history.revision) {
+            Text(verbatim: history.model.status?.head.branch ?? "HEAD").tag(String?.none)
+            Divider()
+            ForEach(branches.local.filter { !$0.isHead }) { Text(verbatim: $0.name).tag(String?.some($0.name)) }
+            Divider()
+            ForEach(branches.remote) { Text(verbatim: $0.name).tag(String?.some($0.name)) }
+        }
+        .labelsHidden()
+        .frame(maxWidth: 130)
+        .help("Whose history: the current branch's or another branch's")
+    }
+
+    private func present(_ keyPath: ReferenceWritableKeyPath<HistoryModel, Commit?>) -> Binding<Bool> {
+        Binding(get: { history[keyPath: keyPath] != nil }, set: { if !$0 { history[keyPath: keyPath] = nil } })
     }
 
     /// Any file of the repository, for its history.
@@ -184,8 +234,9 @@ struct RefChip: View {
     }
 }
 
-/// Copy SHA, copy message, open on GitHub, reuse the message; revert the
-/// commit or reset the branch to it.
+/// Copy SHA, copy message, open on GitHub, reuse the message; check it
+/// out, branch or tag it; cherry-pick it from another branch, revert it,
+/// reset the branch to it.
 struct CommitMenuItems: View {
     let history: HistoryModel
     let commit: Commit
@@ -203,13 +254,31 @@ struct CommitMenuItems: View {
         }
         if let status = history.model.status {
             let busy = status.state != .normal
+            let blocked = busy || status.stagedCount > 0
+            let reason: LocalizedStringKey? = busy ? "Finish or abort what is in progress first."
+                : status.stagedCount > 0 ? "Commit or unstage the staged changes first." : nil
             Divider()
-            // Staged changes would end up in the revert's commit.
-            Button("Revert Commit") { Task { await history.revert(commit) } }
-                .disabled(busy || status.stagedCount > 0)
-                .help(busy ? "Finish or abort what is in progress first."
-                      : status.stagedCount > 0 ? "Commit or unstage the staged changes first."
-                      : "Stage the opposite of this commit's changes, to commit from Working Copy")
+            if status.head.oid != commit.oid {
+                Button("Check Out This Commit") { Task { await history.requestCheckout(commit) } }
+                    .disabled(busy)
+                    .help("Move HEAD to this commit, on no branch")
+            }
+            Button("Create Branch Here…") { history.pendingBranch = commit }
+                .disabled(busy)
+            Button("Create Tag Here…") { history.pendingTag = commit }
+            Divider()
+            if history.revision != nil, let branch = status.head.branch {
+                Button("Cherry-pick into “\(branch)”") { Task { await history.cherryPick(commit) } }
+                    .disabled(blocked)
+                    .help(reason ?? "Commit this commit's changes again on the current branch, with its message")
+            }
+            // Another branch's commit is picked, not reverted. Staged changes
+            // would end up in the revert's commit.
+            if history.revision == nil {
+                Button("Revert Commit") { Task { await history.revert(commit) } }
+                    .disabled(blocked)
+                    .help(reason ?? "Stage the opposite of this commit's changes, to commit from Working Copy")
+            }
             if status.head.oid != commit.oid {
                 Group {
                     if let branch = status.head.branch {

@@ -72,6 +72,22 @@ public struct FileRevision: Sendable, Equatable, Identifiable {
     public var id: String { commit.oid }
 }
 
+/// One line of a file and the commit that last changed it (`git blame`).
+public struct BlameLine: Sendable, Equatable, Identifiable {
+    public let oid: String
+    /// From 1.
+    public let number: Int
+    public let author: String
+    public let date: Date
+    public let summary: String
+    public let text: String
+
+    public var id: Int { number }
+    public var shortOID: String { String(oid.prefix(7)) }
+    /// git gives lines changed in the working copy an all-zero commit.
+    public var isCommitted: Bool { oid.contains { $0 != "0" } }
+}
+
 /// A branch or tag shown next to a commit in History.
 public struct CommitRef: Sendable, Hashable {
     public enum Kind: Sendable, Hashable {
