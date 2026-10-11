@@ -3,13 +3,13 @@ import DKBSourceControlCore
 import SwiftUI
 
 /// A repository's picture, round like a contact's: the image the user chose,
-/// or the initials of its name on a colour of its own.
+/// or the initials of its name on grey, as Contacts draws a monogram.
 struct RepositoryAvatar: View {
     let model: RepositoryModel
     var size: CGFloat = 24
 
-    /// Picked from the record's id, so a rename keeps the colour.
-    private static let colors: [Color] = [.blue, .green, .orange, .pink, .purple, .red, .teal, .indigo, .mint, .brown]
+    /// Contacts' monogram grey, lighter at the top.
+    private static let grey = [Color(red: 0.65, green: 0.67, blue: 0.71), Color(red: 0.52, green: 0.54, blue: 0.58)]
 
     var body: some View {
         Group {
@@ -20,8 +20,7 @@ struct RepositoryAvatar: View {
                     // Logos are often drawn for a white page.
                     .background(.white)
             } else {
-                let color = Self.colors[Self.stableIndex(model.id, count: Self.colors.count)]
-                LinearGradient(colors: [color.opacity(0.7), color], startPoint: .top, endPoint: .bottom)
+                LinearGradient(colors: Self.grey, startPoint: .top, endPoint: .bottom)
                     .overlay {
                         Text(verbatim: model.record.initials)
                             .font(.system(size: size * 0.42, weight: .semibold, design: .rounded))
@@ -33,11 +32,6 @@ struct RepositoryAvatar: View {
         .frame(width: size, height: size)
         .clipShape(Circle())
         .accessibilityHidden(true)
-    }
-
-    /// `hashValue` changes from launch to launch; this doesn't.
-    private static func stableIndex(_ text: String, count: Int) -> Int {
-        Int(text.unicodeScalars.reduce(UInt32(5381)) { ($0 &* 33) &+ $1.value } % UInt32(count))
     }
 
     /// The picture as stored: 256 × 256 PNG. A roughly square image fills
