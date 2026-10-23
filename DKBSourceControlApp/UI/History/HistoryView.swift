@@ -143,7 +143,8 @@ struct HistoryView: View {
     private var list: some View {
         List(selection: $history.selection) {
             ForEach(history.commits) { commit in
-                CommitRow(commit: commit, graph: history.graph[commit.oid], graphWidth: history.graphWidth)
+                CommitRow(commit: commit, graph: history.graph[commit.oid], graphWidth: history.graphWidth,
+                          isIncoming: history.incoming.contains(commit.oid))
                     .tag(commit.oid)
                     .contextMenu { CommitMenuItems(history: history, commit: commit) }
             }
@@ -173,12 +174,13 @@ struct HistoryView: View {
     }
 }
 
-/// SHA, title, refs, author and when; a merge is marked. The graph on
-/// its left, when the list has one.
+/// SHA, title, refs, author and when; a merge is marked, and so is a
+/// commit a pull would bring. The graph on its left, when the list has one.
 private struct CommitRow: View {
     let commit: Commit
     let graph: CommitGraph.Row?
     let graphWidth: Int
+    let isIncoming: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
@@ -188,6 +190,11 @@ private struct CommitRow: View {
                     Image(systemName: "arrow.triangle.merge")
                         .foregroundStyle(.purple)
                         .help("Merge commit")
+                }
+                if isIncoming {
+                    Image(systemName: "arrow.down.circle")
+                        .foregroundStyle(.secondary)
+                        .help("On the remote, not in this branch yet: Pull brings it")
                 }
                 Text(verbatim: commit.title).lineLimit(1)
             }
@@ -322,7 +329,8 @@ struct RefChip: View {
 
 /// Copy SHA, copy message, open on GitHub, reuse the message; check it
 /// out, branch or tag it; cherry-pick it from another branch, revert it,
-/// reset the branch to it.
+/// reset the branch to it. A commit a pull would bring is neither picked
+/// nor reverted.
 struct CommitMenuItems: View {
     let history: HistoryModel
     let commit: Commit
@@ -359,9 +367,9 @@ struct CommitMenuItems: View {
                     .help(reason ?? "Commit this commit's changes again on the current branch, with its message")
             }
             // In another branch's history, or every branch's, a commit is
-            // picked, not reverted. Staged changes would end up in the
-            // revert's commit.
-            if history.revision == .head {
+            // picked, not reverted; one a pull would bring is neither. Staged
+            // changes would end up in the revert's commit.
+            if history.revision == .head, !history.incoming.contains(commit.oid) {
                 Button("Revert Commit") { Task { await history.revert(commit) } }
                     .disabled(blocked)
                     .help(reason ?? "Stage the opposite of this commit's changes, to commit from Working Copy")

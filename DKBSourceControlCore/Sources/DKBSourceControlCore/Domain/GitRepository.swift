@@ -151,9 +151,10 @@ public actor GitRepository {
     /// Newest first. `grep` and `author` match literally, case-insensitively.
     /// A branch with no commit yet has no history rather than an error.
     /// `allBranches` reads every local and remote branch, every tag and
-    /// HEAD instead of `revision`.
-    public func log(revision: String = "HEAD", allBranches: Bool = false, path: String? = nil, grep: String? = nil,
-                    author: String? = nil, limit: Int = 200, skip: Int = 0) async throws -> [Commit] {
+    /// HEAD instead of `revision`; `includingUpstream` adds the upstream's
+    /// commits a pull would bring.
+    public func log(revision: String = "HEAD", allBranches: Bool = false, includingUpstream: Bool = false, path: String? = nil,
+                    grep: String? = nil, author: String? = nil, limit: Int = 200, skip: Int = 0) async throws -> [Commit] {
         try Self.requireArgument(revision)
         // Full ref names, so a local branch can be told from a remote one.
         var arguments = ["log", "-z", "--decorate=full", LogParser.format, "--max-count=\(limit)", "--skip=\(skip)"]
@@ -163,6 +164,7 @@ public actor GitRepository {
         if let grep { arguments.append("--grep=\(grep)") }
         if let author { arguments.append("--author=\(author)") }
         arguments += allBranches ? ["--branches", "--remotes", "--tags", "HEAD"] : [revision]
+        if includingUpstream { arguments.append("@{upstream}") }
         if let path { arguments = [Self.literal] + arguments + ["--", path] }
         do {
             return LogParser.parse(try await run(arguments, readOnly: true).stdout)
@@ -199,6 +201,20 @@ public actor GitRepository {
                 .trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
         }
         return (try await count(["\(oid)..HEAD"]), try await count(["\(oid)..HEAD", "--not", "--remotes"]))
+    }
+
+    /// The upstream's commits HEAD doesn't have: what a pull brings.
+    public func incomingCommits() async throws -> Set<String> {
+        Set(try await run(["rev-list", "HEAD..@{upstream}"], readOnly: true).stdoutText.split(separator: "\n").map(String.init))
+    }
+
+    /// When this work tree last fetched or pulled, from the app or anywhere
+    /// else: git writes FETCH_HEAD each time, even with nothing new. Nil
+    /// before the first fetch (a clone doesn't write it).
+    public func lastFetchDate() async -> Date? {
+        guard let directory = try? await gitDirectory() else { return nil }
+        let attributes = try? FileManager.default.attributesOfItem(atPath: directory.appendingPathComponent("FETCH_HEAD").path)
+        return attributes?[.modificationDate] as? Date
     }
 
     /// Who last changed each line of `path`: as it is in the working copy,

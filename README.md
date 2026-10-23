@@ -61,7 +61,12 @@ is in [`docs/dkb-source-control-build-plan.md`](docs/dkb-source-control-build-pl
   look inside a stash, apply, pop and drop; tags made, pushed and deleted.
 - **Fetch, Pull, Push** with git's own output in a log (⌥⌘L) and a one-line
   explanation of each failure. A branch that was never published asks before
-  its first push.
+  its first push. Pull and Push show how many commits they would bring or
+  send. The repository on screen fetches in the background when it is opened
+  or the app comes back to the front and its last fetch is over 5 minutes
+  old; when that was is shown above the files and on the Dashboard. Behind
+  its upstream, the branch's History lists the commits a pull would bring,
+  marked ↓.
 - **Sign In** when an HTTPS remote wants an account: push, pull, fetch or
   clone asks for a username and a password or access token, hands them to
   git's credential helper (the Keychain), and runs again. A wrong password is

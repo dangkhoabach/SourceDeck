@@ -74,7 +74,10 @@ private struct MainWindowView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             // Coming back from the editor or Terminal is when things changed.
-            Task { await list.refreshAll() }
+            Task {
+                await list.refreshAll()
+                await list.selectedModel?.fetchIfStale()
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: NSWindow.didResizeNotification)) { notification in
             (notification.object as? NSWindow)?.moveBackOnScreen()

@@ -1573,6 +1573,16 @@
         }
       }
     },
+    "Fetched %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đã fetch %@"
+          }
+        }
+      }
+    },
     "File History…" : {
       "localizations" : {
         "vi" : {
@@ -2482,6 +2492,16 @@
         }
       }
     },
+    "Not fetched yet" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chưa fetch"
+          }
+        }
+      }
+    },
     "not published" : {
       "localizations" : {
         "vi" : {
@@ -2558,6 +2578,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
+          }
+        }
+      }
+    },
+    "On the remote, not in this branch yet: Pull brings it" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Có trên remote, chưa có trong branch này: Pull sẽ mang về"
           }
         }
       }

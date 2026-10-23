@@ -38,6 +38,23 @@ struct SyncCounts: View {
     }
 }
 
+/// "Fetched 5 minutes ago", or "Not fetched yet": how fresh the counts to
+/// pull and push are. Only for a branch with an upstream.
+struct FetchDate: View {
+    let head: BranchHead
+    let date: Date?
+
+    var body: some View {
+        if head.upstream != nil {
+            if let date {
+                Text("Fetched \(Text(date, format: .relative(presentation: .named)))")
+            } else {
+                Text("Not fetched yet")
+            }
+        }
+    }
+}
+
 /// Counts of staged, changed, untracked and conflicted files as small
 /// coloured capsules; "Clean" when there is nothing.
 struct ChangeCounts: View {

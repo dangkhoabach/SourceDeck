@@ -76,6 +76,8 @@ struct RepositoryView: View {
             }
         }
         .task(id: model.id) { await model.watchFileSystem() }
+        // Once its status is read, so its upstream is known.
+        .task(id: model.status == nil ? nil : model.id) { await model.fetchIfStale() }
     }
 
     @ToolbarContentBuilder
@@ -100,9 +102,9 @@ struct RepositoryView: View {
             .help("Read the repository's status again (⌘R)")
             operationButton(.fetch, title: "Fetch", icon: "arrow.down.circle", key: "f",
                             help: "Download new commits from the remote without changing your files (⇧⌘F)")
-            operationButton(.pull, title: "Pull", icon: "arrow.down.to.line", key: "l",
+            operationButton(.pull, title: "Pull", icon: "arrow.down.to.line", key: "l", count: model.status?.head.behind ?? 0,
                             help: "Bring the remote's new commits into this branch (⇧⌘L)")
-            operationButton(.push, title: "Push", icon: "arrow.up.circle", key: "p",
+            operationButton(.push, title: "Push", icon: "arrow.up.circle", key: "p", count: model.status?.head.ahead ?? 0,
                             help: "Send this branch's new commits to the remote (⇧⌘P)")
             Menu {
                 OpenInMenuItems(model: model)
@@ -130,13 +132,22 @@ struct RepositoryView: View {
         }
     }
 
+    /// `count`: the commits it would pull or push, beside its icon.
     private func operationButton(_ operation: RepositoryModel.RemoteOperation, title: LocalizedStringKey, icon: String,
-                                 key: KeyEquivalent, help: LocalizedStringKey) -> some View {
+                                 key: KeyEquivalent, count: Int = 0, help: LocalizedStringKey) -> some View {
         Button {
             Task { operation == .push ? await model.push() : await model.run(operation) }
         } label: {
             if model.runningOperation == operation {
                 ProgressView().controlSize(.small)
+            } else if count > 0 {
+                HStack(spacing: 3) {
+                    Image(systemName: icon)
+                    Text(count, format: .number).monospacedDigit()
+                }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(Text(title))
+                .accessibilityValue(Text(count, format: .number))
             } else {
                 Label(title, systemImage: icon)
             }

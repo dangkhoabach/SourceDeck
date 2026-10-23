@@ -356,4 +356,34 @@ import Testing
         await workingCopy.loadDiff()
         #expect(!workingCopy.isLoadingDiff)
     }
+
+    @Test func theRepositoryOnScreenFetchesAndHistoryShowsWhatAPullBrings() async throws {
+        let (model, url) = try await makeModel()
+        let remote = url.path + "-remote.git", theirs = url.path + "-theirs"
+        defer { [url.path, remote, theirs].forEach { try? FileManager.default.removeItem(atPath: $0) } }
+        let identity = "-c user.name=Test -c user.email=test@example.com -c commit.gpgsign=false"
+        try await sh("""
+            git init -q --bare '\(remote)' && git remote add origin '\(remote)' && git commit -q --allow-empty -m one \
+            && git push -q -u origin main && git clone -q '\(remote)' '\(theirs)' && cd '\(theirs)' \
+            && git \(identity) commit -q --allow-empty -m theirs && git push -q
+            """, in: url)
+        await model.refresh()
+        #expect(model.lastFetch == nil && model.status?.head.behind == 0)
+
+        await model.fetchIfStale()
+        let fetched = try #require(model.lastFetch)
+        #expect(model.status?.head.behind == 1)
+        // Not again within 5 minutes.
+        await model.fetchIfStale()
+        #expect(model.lastFetch == fetched)
+
+        let history = model.history
+        await history.reload()
+        #expect(history.commits.map(\.message) == ["theirs", "one"])
+        #expect(history.incoming == [history.commits[0].oid])
+
+        await model.run(.pull)
+        await history.reload()
+        #expect(model.status?.head.behind == 0 && history.commits.map(\.message) == ["theirs", "one"] && history.incoming.isEmpty)
+    }
 }

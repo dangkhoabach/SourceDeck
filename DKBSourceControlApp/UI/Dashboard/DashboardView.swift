@@ -84,6 +84,10 @@ private struct RepositoryCard: View {
                     SyncCounts(head: status.head)
                     Spacer()
                     StateBadge(state: status.state)
+                    FetchDate(head: status.head, date: model.lastFetch)
+                        .font(.caption)
+                        .lineLimit(1)
+                        .fixedSize()
                 }
                 .font(.callout)
                 .foregroundStyle(.secondary)

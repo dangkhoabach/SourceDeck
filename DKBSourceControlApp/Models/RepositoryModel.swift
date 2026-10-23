@@ -53,6 +53,9 @@ final class RepositoryModel: Identifiable {
     private(set) var refreshError: Error?
     private(set) var isRefreshing = false
     private(set) var runningOperation: RemoteOperation?
+    /// When the work tree last fetched or pulled, from anywhere: what the
+    /// ahead and behind counts are as fresh as.
+    private(set) var lastFetch: Date?
     /// The last failed write or remote operation, until the next one succeeds.
     private(set) var operationError: Error?
     /// Counts finished refreshes, so a diff on screen reloads even when the
@@ -68,6 +71,9 @@ final class RepositoryModel: Identifiable {
     var inspection: Inspection?
     var tab: Tab = .workingCopy
     @ObservationIgnored private var remoteLoaded = false
+    /// The last background fetch tried, failed or not, so one failing
+    /// offline doesn't run again on every return to the app.
+    @ObservationIgnored private var lastFetchAttempt: Date?
     @ObservationIgnored private var refreshAgain = false
     @ObservationIgnored private var writesInFlight = 0
     @ObservationIgnored private var watchFilter: WatchFilter?
@@ -143,6 +149,7 @@ final class RepositoryModel: Identifiable {
             async let commits = repository.log(limit: 1)
             self.status = try await status
             lastCommit = try await commits.first
+            lastFetch = await repository.lastFetchDate()
             refreshError = nil
             if !remoteLoaded {
                 gitHubURL = try? await repository.remoteURL()?.gitHubWebURL
@@ -192,6 +199,21 @@ final class RepositoryModel: Identifiable {
             await run(failed.operation, setUpstream: failed.setUpstream, interactive: false)
             return operationError
         }
+    }
+
+    /// How old a fetch can be before the repository on screen fetches again.
+    static let staleFetch: TimeInterval = 5 * 60
+
+    /// When the repository is on screen: fetched in the background if its
+    /// branch has an upstream and neither a fetch nor a try at one came in
+    /// the last 5 minutes, so the counts to pull and push are worth reading.
+    /// Never asks to sign in.
+    func fetchIfStale() async {
+        guard status?.head.upstream != nil, runningOperation == nil else { return }
+        let last = [lastFetch, lastFetchAttempt].compactMap { $0 }.max()
+        guard last.map({ Date.now.timeIntervalSince($0) > Self.staleFetch }) ?? true else { return }
+        lastFetchAttempt = .now
+        await run(.fetch, interactive: false)
     }
 
     /// Push, asking first when the branch was never published (plan D14).

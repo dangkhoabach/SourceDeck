@@ -6,7 +6,8 @@ import Observation
 /// History of one repository (plan F6): commits newest first, 200 at a
 /// time, searched by message, author or path through git itself, or the
 /// history of one file; the selected commit's files and the diff of one of
-/// them; any branch's history, or every branch's, drawn as a graph;
+/// them; any branch's history, or every branch's, drawn as a graph, with
+/// the upstream's commits a pull would bring above the current branch's;
 /// reverting, cherry-picking or checking out a commit and resetting the
 /// branch to one.
 @MainActor
@@ -31,6 +32,9 @@ final class HistoryModel {
     private(set) var graph: [String: CommitGraph.Row] = [:]
     /// The widest row, so every row's graph takes the same width.
     private(set) var graphWidth = 0
+    /// The upstream's commits HEAD doesn't have yet, listed with HEAD's
+    /// once a fetch has brought them.
+    private(set) var incoming: Set<String> = []
     private(set) var isLoading = false
     private(set) var reachedEnd = false
     private(set) var loadError: Error?
@@ -116,13 +120,16 @@ final class HistoryModel {
             var changes: [String: CommitFileChange] = [:]
             // A file's history is HEAD's when every branch is shown.
             let branch = if case .branch(let name) = query.revision { name } else { "HEAD" }
+            // Behind its upstream, the current branch's list shows what a pull brings.
+            let upstream = query.file == nil && query.revision == .head && (model.status?.head.behind ?? 0) > 0
+            let incoming = upstream ? try await model.repository.incomingCommits() : []
             if let file = query.file {
                 let revisions = try await model.repository.fileHistory(path: file, revision: branch, limit: limit, skip: skip)
                 page = revisions.map(\.commit)
                 for revision in revisions { changes[revision.id] = revision.file }
             } else {
                 page = try await model.repository.log(revision: branch, allBranches: query.revision == .allBranches,
-                                                      path: query.scope == .path ? text : nil,
+                                                      includingUpstream: upstream, path: query.scope == .path ? text : nil,
                                                       grep: query.scope == .message ? text : nil,
                                                       author: query.scope == .author ? text : nil,
                                                       limit: limit, skip: skip)
@@ -130,6 +137,7 @@ final class HistoryModel {
             guard current == generation else { return }
             fileChanges = skip == 0 ? changes : fileChanges.merging(changes) { $1 }
             commits = skip == 0 ? page : commits + page
+            self.incoming = incoming
             let rows = query.file == nil && text == nil ? CommitGraph.layout(commits) : []
             graph = Dictionary(uniqueKeysWithValues: zip(commits.map(\.oid), rows))
             graphWidth = rows.map(\.width).max() ?? 0

@@ -11,6 +11,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Hosting the app's tests, which make their own repositories: the
+        // list would read, and fetch, the user's real ones.
+        guard ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil else { return }
         ThemePreference.apply()
         Task { await AppServices.shared.start() }
         _ = AppUpdater.shared   // starts Sparkle's scheduled check (the controller is lazy)

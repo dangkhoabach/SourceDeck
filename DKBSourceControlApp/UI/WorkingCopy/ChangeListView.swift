@@ -199,7 +199,7 @@ struct ChangeListView: View {
     }
 }
 
-/// "main → origin/main ↑1 ↓2" above the lists.
+/// "main → origin/main ↑1 ↓2 · Fetched 5 minutes ago" above the lists.
 private struct BranchLine: View {
     let model: RepositoryModel
 
@@ -213,6 +213,10 @@ private struct BranchLine: View {
                 }
                 SyncCounts(head: head)
                 Spacer(minLength: 0)
+                FetchDate(head: head, date: model.lastFetch)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
             }
             .font(.callout)
         }

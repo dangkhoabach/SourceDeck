@@ -435,6 +435,31 @@ import Testing
         #expect(try await clone.log().map(\.message) == ["one"])
     }
 
+    @Test func aFetchTellsWhenAndWhatAPullWouldBring() async throws {
+        let remote = try await TempRepository(bare: true)
+        let mine = try await TempRepository()
+        try await mine.run("remote", "add", "origin", remote.url.path)
+        try mine.write("a.txt", "1\n")
+        try await mine.commitAll("one")
+        _ = try await mine.repository.push(setUpstream: "main")
+        #expect(await mine.repository.lastFetchDate() == nil)
+
+        let theirs = try await TempRepository(cloning: remote)
+        try theirs.write("b.txt", "b\n")
+        try await theirs.commitAll("theirs")
+        _ = try await theirs.repository.push()
+        // Nothing of it is known before a fetch.
+        #expect(try await mine.repository.incomingCommits().isEmpty)
+
+        let started = Date.now.addingTimeInterval(-1)
+        _ = try await mine.repository.fetch()
+        #expect(try #require(await mine.repository.lastFetchDate()) >= started)
+        let theirsOID = try await theirs.run("rev-parse", "HEAD").trimmingCharacters(in: .newlines)
+        #expect(try await mine.repository.incomingCommits() == [theirsOID])
+        #expect(try await mine.repository.log().map(\.message) == ["one"])
+        #expect(try await mine.repository.log(includingUpstream: true).map(\.message) == ["theirs", "one"])
+    }
+
     @Test(arguments: [
         ("https://github.com/dangkhoabach/DKB-Source-Control.git", "DKB-Source-Control"),
         ("https://github.com/o/repo", "repo"),
