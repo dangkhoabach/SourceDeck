@@ -21,7 +21,7 @@ struct SourceDeckApp: App {
         }
         .defaultSize(width: 1440, height: 900)
         .commands {
-            // Sparkle's usual place, under About, as in the other DKB apps.
+            // Sparkle's usual place, under About, as in the sibling apps.
             CommandGroup(after: .appInfo) {
                 Button("Check for Updates…") { AppUpdater.checkForUpdates() }
             }

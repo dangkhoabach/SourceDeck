@@ -1,7 +1,7 @@
 # Releasing SourceDeck (native, macOS)
 
 Everything runs locally on this Mac — no CI secrets, no GitHub Releases.
-Same manual-publish model as DKB Monitor / DKB Clamshell: build and sign
+Same manual-publish model as SignalBar / FoldAway: build and sign
 here, upload by hand to admin.dangkhoabach.vn, and Sparkle inside the
 installed app picks the new version up from
 `updates.dangkhoabach.vn/dkb-source-control/appcast.xml` (since
@@ -33,15 +33,15 @@ Security › **Open Anyway** on first launch.
 1. **Signing certificate** — `scripts/create-signing-cert.sh` (creates the
    certificate in the login Keychain and writes `Local.xcconfig`).
 2. **Sparkle EdDSA keypair** — under the `dkb-source-control` Keychain
-   account, kept separate from DKB Monitor's (default `ed25519` account),
-   DKB Downloader's and DKB Clamshell's:
+   account, kept separate from SignalBar's (default `ed25519` account),
+   MediaCatch's and FoldAway's:
    ```bash
    .sparkle-tools/2.6.4/bin/generate_keys --account dkb-source-control
    ```
    It prints the public half, which goes into `SUPublicEDKey` in
    `SourceDeckApp/Info.plist`; the private half stays in the login
    Keychain. `--account` is required — without it the tools fall back to the
-   default account and silently reuse DKB Monitor's key. `release.sh`
+   default account and silently reuse SignalBar's key. `release.sh`
    downloads the tools (checksum-verified) on its first run, and refuses to
    build when the Keychain key and `SUPublicEDKey` don't match.
 3. **`create-dmg`** — `brew install create-dmg` (styles the installer's Finder
@@ -62,7 +62,7 @@ Release keeps Hardened Runtime. Its library validation only loads
 frameworks signed by Apple or by the app's own Team ID, and a self-signed
 certificate has no Team ID — so the embedded `Sparkle.framework`, although
 signed by the very same certificate, is refused at launch ("mapping process
-and mapped file have different Team IDs"). As in DKB Clamshell, the
+and mapped file have different Team IDs"). As in FoldAway, the
 `com.apple.security.cs.disable-library-validation` entitlement
 (`SourceDeckApp/SourceDeckApp.entitlements`) lifts only that
 one check; `release.sh` verifies that it is the one and only entitlement.

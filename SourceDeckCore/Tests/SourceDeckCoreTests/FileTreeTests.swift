@@ -22,19 +22,19 @@ import Testing
 
     @Test func singleChildFoldersAreMerged() {
         let paths = [
-            "DKBDownloaderApp/App/AppSettings.swift",
-            "DKBDownloaderApp/UI/Home/HomeViewModel.swift",
-            "DKBDownloaderApp/UI/Library/LibraryViewModel.swift",
-            "DKBDownloaderCore/Sources/DKBDownloaderCore/Domain/DownloadManager.swift",
+            "MediaCatchApp/App/AppSettings.swift",
+            "MediaCatchApp/UI/Home/HomeViewModel.swift",
+            "MediaCatchApp/UI/Library/LibraryViewModel.swift",
+            "MediaCatchCore/Sources/MediaCatchCore/Domain/DownloadManager.swift",
             "README.md",
         ]
         #expect(outline(paths) == [
-            "DKBDownloaderApp/",
+            "MediaCatchApp/",
             "  App/", "    AppSettings.swift",
             "  UI/",
             "    Home/", "      HomeViewModel.swift",
             "    Library/", "      LibraryViewModel.swift",
-            "DKBDownloaderCore/Sources/DKBDownloaderCore/Domain/", "  DownloadManager.swift",
+            "MediaCatchCore/Sources/MediaCatchCore/Domain/", "  DownloadManager.swift",
             "README.md",
         ])
     }

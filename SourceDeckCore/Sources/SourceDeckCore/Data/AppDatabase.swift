@@ -7,7 +7,7 @@ import GRDB
 /// order, and the commit message being written for each.
 /// Nothing about a repository's contents, history or credentials is ever
 /// stored here. Light preferences (theme, language, git path) live in
-/// `UserDefaults`, where the shared DKB `@AppStorage` helpers already read
+/// `UserDefaults`, where the shared `@AppStorage` helpers already read
 /// them.
 public struct AppDatabase: Sendable {
     public let dbQueue: DatabaseQueue

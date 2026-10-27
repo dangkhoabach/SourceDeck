@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Builds, signs, packages and Sparkle-signs a SourceDeck release
-# entirely on this Mac (docs/release.md). Same shape as DKB Clamshell's
+# entirely on this Mac (docs/release.md). Same shape as FoldAway's
 # release.sh: local certificate, Hardened Runtime, Sparkle signature.
 #   ./scripts/release.sh           # asks for the version
 #   ./scripts/release.sh 1.0.1
@@ -18,7 +18,7 @@ SCHEME="SourceDeckApp"
 PROJECT="SourceDeck.xcodeproj"
 APP_NAME="SourceDeck"
 INFO_PLIST="SourceDeckApp/Info.plist"
-# Required: without --account, sign_update silently signs with DKB Monitor's
+# Required: without --account, sign_update silently signs with SignalBar's
 # default-account key, producing a signature no installed copy accepts.
 SPARKLE_ACCOUNT="dkb-source-control"
 SPARKLE_VERSION="2.6.4"
@@ -35,7 +35,7 @@ IDENTITY=$(sed -nE 's/^CODE_SIGN_IDENTITY *= *(.*)$/\1/p' Local.xcconfig | tail 
 }
 command -v create-dmg >/dev/null || { echo "Error: create-dmg not found. Run: brew install create-dmg" >&2; exit 1; }
 
-# Cached per version, verified before anything is extracted (DKB Monitor).
+# Cached per version, verified before anything is extracted (SignalBar).
 if [ ! -x "$SPARKLE_TOOLS_DIR/bin/sign_update" ]; then
   mkdir -p "$SPARKLE_TOOLS_DIR"
   curl -fsSL -o "$SPARKLE_TOOLS_DIR/sparkle.tar.xz" \

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copies a built release into /Applications and launches it (DKB Clamshell).
+# Copies a built release into /Applications and launches it (FoldAway).
 #   ./scripts/install-local.sh            # newest release-output/<version>
 #   ./scripts/install-local.sh 1.0.0
 set -euo pipefail

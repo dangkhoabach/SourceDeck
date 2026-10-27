@@ -1,8 +1,8 @@
 import AppKit
 import SwiftUI
 
-/// Light / Dark / System, same key and behavior as DKB Monitor and DKB
-/// Secret. Applied through `NSApp.appearance` (nil = follow the system)
+/// Light / Dark / System, same key and behavior as SignalBar and
+/// KeyCellar. Applied through `NSApp.appearance` (nil = follow the system)
 /// because `.preferredColorScheme(nil)` does not reliably clear an explicit
 /// scheme from an already-visible window.
 enum ThemePreference: String, CaseIterable, Identifiable {

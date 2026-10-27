@@ -2,7 +2,7 @@ import SourceDeckCore
 import SwiftUI
 
 /// One `Form` with `.formStyle(.grouped)` and a `Section` per topic, like the
-/// other DKB apps' Settings. Every change applies at once.
+/// the sibling apps' Settings. Every change applies at once.
 struct SettingsView: View {
     @AppStorage(ThemePreference.key) private var themeRaw = ThemePreference.system.rawValue
     @AppStorage(AppLocale.key) private var languageRaw = AppLocale.systemDefault.rawValue

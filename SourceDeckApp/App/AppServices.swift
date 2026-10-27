@@ -19,7 +19,7 @@ final class AppServices {
 
     /// Opened once, and the failure kept rather than thrown away, so a
     /// database that won't open is reported on screen instead of looking
-    /// like an empty repository list (same reasoning as DKB Monitor).
+    /// like an empty repository list (same reasoning as SignalBar).
     @ObservationIgnored let database: Result<AppDatabase, Error>
     private(set) var git: GitState = .resolving
     /// Created once git is usable and the database is open.

@@ -1,7 +1,7 @@
 import Foundation
 
 /// In-app language override, independent of System Settings > Language &
-/// Region (ported from DKB Clamshell). Views use `LocalizedStringKey`
+/// Region (ported from FoldAway). Views use `LocalizedStringKey`
 /// everywhere, so overriding `\.locale` on the root views in
 /// `SourceDeckApp.swift` makes the switch take effect. A sheet doesn't
 /// get that override (macOS 27: Clone and Sign In came up in English), so
@@ -27,7 +27,7 @@ enum AppLocale: String, CaseIterable, Identifiable {
     }
 
     /// The `.lproj` bundle of the in-app language, for `String(localized:bundle:)`
-    /// (ported from DKB Clamshell). `String(localized:)` alone reads the
+    /// (ported from FoldAway). `String(localized:)` alone reads the
     /// *system* language and ignores the `\.locale` override the views get,
     /// so text AppKit draws itself — the window title — goes through this.
     static var bundle: Bundle {

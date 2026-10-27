@@ -1,7 +1,7 @@
 import Sparkle
 
 /// Thin wrapper around Sparkle's `SPUStandardUpdaterController`, copied from
-/// DKB Clamshell / DKB Monitor: it reads `SUFeedURL` and `SUPublicEDKey`
+/// FoldAway / SignalBar: it reads `SUFeedURL` and `SUPublicEDKey`
 /// straight from Info.plist, so "check on launch + Check for Updates…"
 /// needs no delegate.
 ///

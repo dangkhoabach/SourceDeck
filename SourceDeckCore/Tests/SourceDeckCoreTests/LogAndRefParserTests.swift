@@ -104,7 +104,7 @@ import Testing
     @Test(arguments: [
         ("https://github.com/dangkhoabach/MyWebsite.git", "https://github.com/dangkhoabach/MyWebsite"),
         ("https://github.com/dangkhoabach/MyWebsite", "https://github.com/dangkhoabach/MyWebsite"),
-        ("git@github.com:dangkhoabach/DKB-Monitor.git", "https://github.com/dangkhoabach/DKB-Monitor"),
+        ("git@github.com:dangkhoabach/SignalBar.git", "https://github.com/dangkhoabach/SignalBar"),
         ("ssh://git@github.com/dangkhoabach/AcmeGroup.git", "https://github.com/dangkhoabach/AcmeGroup"),
     ])
     func gitHubWebURL(raw: String, expected: String) {
