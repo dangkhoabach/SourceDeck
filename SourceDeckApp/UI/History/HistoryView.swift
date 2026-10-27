@@ -235,7 +235,7 @@ private struct GraphCell: View {
     let isHead: Bool
     @Environment(\.backgroundProminence) private var prominence
 
-    private static let lane: CGFloat = 14
+    nonisolated private static let lane: CGFloat = 14
     /// Wider than this, the lanes on the right are cut off.
     private static let maxLanes = 8
     /// How far the lines reach past the row, across the list's spacing
@@ -243,7 +243,7 @@ private struct GraphCell: View {
     private static let overhang: CGFloat = 8
     /// The middle of the row's first line, below the row's top.
     private static let dotY: CGFloat = 11
-    private static let colors: [Color] = [.blue, .orange, .green, .purple, .pink, .teal, .red, .indigo, .mint, .brown]
+    nonisolated private static let colors: [Color] = [.blue, .orange, .green, .purple, .pink, .teal, .red, .indigo, .mint, .brown]
 
     static func width(of lanes: Int) -> CGFloat {
         CGFloat(min(lanes, maxLanes)) * lane
