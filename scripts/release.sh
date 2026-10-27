@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds, signs, packages and Sparkle-signs a DKB Source Control release
+# Builds, signs, packages and Sparkle-signs a SourceDeck release
 # entirely on this Mac (docs/release.md). Same shape as DKB Clamshell's
 # release.sh: local certificate, Hardened Runtime, Sparkle signature.
 #   ./scripts/release.sh           # asks for the version
@@ -9,15 +9,15 @@
 # certificate named in Local.xcconfig (scripts/create-signing-cert.sh): a
 # folder-access grant for a repository on the Desktop or in Documents is
 # keyed on the signing identity, so every release must carry the same one or
-# the permission is asked for again (plan D1). No notarization: first launch
+# the permission is asked for again. No notarization: first launch
 # on another Mac needs System Settings › Privacy & Security › Open Anyway.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-SCHEME="DKBSourceControlApp"
-PROJECT="DKBSourceControlNative.xcodeproj"
-APP_NAME="DKB Source Control"
-INFO_PLIST="DKBSourceControlApp/Info.plist"
+SCHEME="SourceDeckApp"
+PROJECT="SourceDeck.xcodeproj"
+APP_NAME="SourceDeck"
+INFO_PLIST="SourceDeckApp/Info.plist"
 # Required: without --account, sign_update silently signs with DKB Monitor's
 # default-account key, producing a signature no installed copy accepts.
 SPARKLE_ACCOUNT="dkb-source-control"
@@ -76,10 +76,10 @@ if [ "$VERSION" != "$CURRENT_VERSION" ] &&
   exit 1
 fi
 
-echo "==> Testing DKBSourceControlCore"
-(cd DKBSourceControlCore && swift test)
+echo "==> Testing SourceDeckCore"
+(cd SourceDeckCore && swift test)
 
-echo "==> Testing DKBSourceControlApp"
+echo "==> Testing SourceDeckApp"
 xcodebuild test -project "$PROJECT" -scheme "$SCHEME" -destination "platform=macOS" -quiet
 
 # Info.plist is edited in place before the build, so any failure from here
@@ -139,7 +139,7 @@ for arch in arm64 x86_64; do
     exit 1
   }
 done
-# Exactly one entitlement (plan D1): library validation off, so Hardened
+# Exactly one entitlement: library validation off, so Hardened
 # Runtime loads Sparkle.framework, which a self-signed certificate (no Team
 # ID) can't make pass that check. No sandbox, and in particular no
 # get-task-allow, which Xcode injects into Debug builds.
@@ -149,7 +149,7 @@ EXPECTED='<key>com.apple.security.cs.disable-library-validation</key>'
 echo "    signature OK, hardened runtime OK, entitlements OK, version $VERSION_BUILT, architectures: $ARCHS_BUILT"
 
 echo "==> Creating DMG"
-DMG_PATH="$OUT_DIR/DKB-Source-Control-$VERSION.dmg"
+DMG_PATH="$OUT_DIR/SourceDeck-$VERSION.dmg"
 rm -f "$DMG_PATH"
 create-dmg \
   --volname "$APP_NAME" \

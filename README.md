@@ -1,34 +1,32 @@
-# DKB Source Control
+# SourceDeck
 
-A native macOS Git client for daily work on this Mac, replacing Sourcetree for
+A native macOS Git client for daily work, built to replace Sourcetree for
 the things it is actually used for: seeing what changed, staging files, hunks
 and single lines, reading diffs, committing, pushing and pulling, and reading
 history — across every repository at once from one dashboard.
 
-![Working copy: staged files, a diff with changed words marked, and a commit message in the git-rule format](docs/screenshots/working-copy.png)
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/workingcopy-dark.webp"><img src="docs/screenshots/workingcopy-light.webp" alt="Working copy: staged files, a diff with lines picked for staging, and a commit message in the house format"></picture>
 
 Three things set it apart from a general-purpose client:
 
-- **Commit messages in the house format.** The composer builds the
-  `+ Keyword +` / ` - detail` / `  + sub-detail` structure from
-  `git-rule.md` byte for byte, previews exactly what will be sent and refuses
-  a message that breaks the format or carries an AI attribution line.
+- **Commit messages in one house format.** A `+ Keyword +` header, ` - detail`
+  lines and `  + sub-detail` lines, with no blank line after the header. The
+  composer builds that structure byte for byte, previews exactly what will be
+  sent, and refuses a message that breaks the format or carries an AI
+  attribution line.
 - **A check before every commit.** Staged `.env` files, private keys,
   `Local.xcconfig` and API keys in added lines are listed before the commit
   goes through; unstaging them is the default answer.
 - **Every repository on one screen.** Which ones have changes, what is ahead
   or behind, fetch them all with one click.
 
-![A staged .env file stops the commit](docs/screenshots/sensitive-check.png)
-
-The full design — measurements, decisions and the phase-by-phase checklist —
-is in [`docs/dkb-source-control-build-plan.md`](docs/dkb-source-control-build-plan.md).
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/sensitive-dark.webp"><img src="docs/screenshots/sensitive-light.webp" alt="A staged .env file and a password in the code stop the commit"></picture>
 
 ## What it does
 
 - **Avatars** for repositories, round like a contact's: the initials of the
-  name on a colour of its own, or a picture or logo chosen from the
-  repository's menu in the sidebar or on the Dashboard.
+  name on grey, or a picture or logo chosen from the repository's menu in the
+  sidebar or on the Dashboard.
 - **Dashboard** of every added repository: branch, ahead and behind, staged,
   changed and new files, the last commit; refresh all, fetch all, optional
   automatic fetch. Add a repository by cloning it from a URL, choosing a
@@ -76,7 +74,7 @@ is in [`docs/dkb-source-control-build-plan.md`](docs/dkb-source-control-build-pl
   signed in to each, with Sign In and Sign Out.
 - English and Vietnamese, light and dark.
 
-![History with a commit's message, files and diff](docs/screenshots/history.png)
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/history-dark.webp"><img src="docs/screenshots/history-light.webp" alt="History with a commit's message, files and diff"></picture>
 
 **Not here, on purpose:** rebase and a conflict editor. A
 merge, cherry-pick, revert or rebase in progress is shown with an Abort button
@@ -121,11 +119,11 @@ Git. Your `.gitconfig`, global ignore file, hooks and credential helper
 (`osxkeychain`) apply exactly as they do in Terminal. Hooks get the `PATH` of
 your login shell, so a hook that runs `node` from nvm works.
 
-Measured on this Mac: status, a page of history and a 5,000-line diff of
+Measured on the development Mac (Apple M3 Pro): status, a page of history and a 5,000-line diff of
 `swift-nio` (3,082 commits) each take under 45 ms; a clean `xcodebuild` inside
 the open repository costs the app 0.3 % CPU on average.
 
-![Dashboard](docs/screenshots/dashboard.png)
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/dashboard-dark.webp"><img src="docs/screenshots/dashboard-light.webp" alt="Dashboard"></picture>
 
 ## Requirements
 
@@ -133,11 +131,27 @@ the open repository costs the app 0.3 % CPU on average.
 - git 2.30 or later — the one that comes with Xcode or the Command Line Tools
   (`xcode-select --install`) is fine.
 
-## Building
+## Install
+
+Download the latest version from
+[apps.dangkhoabach.vn/dkb-source-control](https://apps.dangkhoabach.vn/dkb-source-control).
+
+The app is signed with a self-signed certificate, not an Apple Developer ID, so macOS blocks
+the first launch. Open it once from **System Settings → Privacy & Security → Open Anyway**.
+Updates then arrive through **Check for Updates…** ([Sparkle](https://sparkle-project.org/),
+signed with EdDSA).
+
+SourceDeck was called DKB Source Control up to version 1.0.4. It is the same app with the same
+bundle identifier, so an installed copy keeps its repository list, drafts and updates.
+
+## Build from source
+
+Requirements: Xcode 26 or later.
 
 ```bash
-./scripts/create-signing-cert.sh   # once: self-signed identity → Local.xcconfig
-open DKBSourceControlNative.xcodeproj
+cp Local.xcconfig.example Local.xcconfig   # ad-hoc signing, enough to build and run
+./scripts/create-signing-cert.sh           # or: a stable self-signed identity
+open SourceDeck.xcodeproj
 ```
 
 Swift 6 / SwiftUI. The `.xcodeproj` is committed (`project.pbxproj` and the
@@ -149,13 +163,13 @@ stable across builds, which keeps a macOS folder-access grant (for a
 repository on the Desktop or in Documents) from being asked again after every
 rebuild.
 
-`DKBSourceControlCore` is a headless Swift package (git process runner,
+`SourceDeckCore` is a headless Swift package (git process runner,
 parsers, patch building, commit message rules, GRDB storage). Both test
 suites run on throwaway repositories with the real git — nothing is mocked:
 
 ```bash
-cd DKBSourceControlCore && swift test
-xcodebuild -project DKBSourceControlNative.xcodeproj -scheme DKBSourceControlApp test
+cd SourceDeckCore && swift test                                        # 182 tests
+xcodebuild -project SourceDeck.xcodeproj -scheme SourceDeckApp test    # 37 tests
 ```
 
 The only third-party dependency is [GRDB](https://github.com/groue/GRDB.swift),
@@ -168,3 +182,26 @@ and its Sparkle signature into `release-output/`; the DMG is published
 through admin.dangkhoabach.vn, and the installed app finds it with Check for
 Updates… (once a day if allowed). `./scripts/install-local.sh` installs a
 build into `/Applications`. See [`docs/release.md`](docs/release.md).
+
+## Forking
+
+Change these before you ship your own build, so it neither replaces itself with the official
+release nor shares its data:
+
+- `PRODUCT_BUNDLE_IDENTIFIER` in the Xcode project.
+- `SUFeedURL` and `SUPublicEDKey` in `SourceDeckApp/Info.plist` (generate your own key with
+  Sparkle's `generate_keys`).
+
+## Security
+
+Please report vulnerabilities privately, as described in [SECURITY.md](SECURITY.md).
+
+## Contributing
+
+Issues are welcome. This is a personal project, so pull requests are read but may not be
+merged.
+
+## License
+
+[MIT](LICENSE) for the source code. The SourceDeck name, app icon and logo are not covered by
+the license; use your own for a fork.

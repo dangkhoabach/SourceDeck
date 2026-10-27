@@ -1,15 +1,15 @@
 // Renders the app icon set from code: a dark rounded square with a git
 // branch glyph, so the project needs no design tool to produce
-// DKBSourceControlApp/Resources/Assets.xcassets/AppIcon.appiconset.
-// Placeholder look (plan Phase 1, D21) until the DKB brand glyph and colour
-// for this product are chosen.
+// SourceDeckApp/Resources/Assets.xcassets/AppIcon.appiconset.
+// Placeholder look until the brand glyph and colour for this product are
+// chosen.
 //
 // Run once (or whenever the look changes):
 //   swift scripts/generate-app-icon.swift
 import AppKit
 
 let root = URL(fileURLWithPath: CommandLine.arguments.first!).deletingLastPathComponent().deletingLastPathComponent()
-let iconset = root.appendingPathComponent("DKBSourceControlApp/Resources/Assets.xcassets/AppIcon.appiconset")
+let iconset = root.appendingPathComponent("SourceDeckApp/Resources/Assets.xcassets/AppIcon.appiconset")
 try FileManager.default.createDirectory(at: iconset, withIntermediateDirectories: true)
 
 func render(size: CGFloat) -> NSImage {

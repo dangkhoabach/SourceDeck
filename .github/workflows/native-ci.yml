@@ -1,0 +1,48 @@
+name: Native (Swift) CI
+
+# Build + test only. Releases are built, signed and published locally
+# (scripts/release.sh), so nothing here needs a secret.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "SourceDeckApp/**"
+      - "SourceDeckAppTests/**"
+      - "SourceDeckCore/**"
+      - "SourceDeck.xcodeproj/**"
+      - ".github/workflows/native-ci.yml"
+  pull_request:
+    paths:
+      - "SourceDeckApp/**"
+      - "SourceDeckAppTests/**"
+      - "SourceDeckCore/**"
+      - "SourceDeck.xcodeproj/**"
+      - ".github/workflows/native-ci.yml"
+
+jobs:
+  build-and-test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select latest available Xcode
+        run: |
+          LATEST=$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -1)
+          echo "Using $LATEST"
+          sudo xcode-select -s "$LATEST"
+          xcodebuild -version
+
+      - name: Test SourceDeckCore (headless package)
+        working-directory: SourceDeckCore
+        run: swift test
+
+      # Local.xcconfig is gitignored (per-machine signing identity); the
+      # example is ad-hoc, which is all a compile check needs.
+      - name: Create Local.xcconfig
+        run: cp Local.xcconfig.example Local.xcconfig
+
+      - name: Build SourceDeckApp
+        run: |
+          xcodebuild -project SourceDeck.xcodeproj -scheme SourceDeckApp -configuration Debug build \
+            CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO

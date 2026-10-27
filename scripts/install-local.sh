@@ -5,7 +5,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-APP_NAME="DKB Source Control"
+APP_NAME="SourceDeck"
 VERSION="${1:-$(ls release-output 2>/dev/null | sort -V | tail -1)}"
 [ -n "$VERSION" ] || { echo "Error: no release in release-output/. Run scripts/release.sh first." >&2; exit 1; }
 SRC="release-output/$VERSION/$APP_NAME.app"

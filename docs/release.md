@@ -1,19 +1,19 @@
-# Releasing DKB Source Control (native, macOS)
+# Releasing SourceDeck (native, macOS)
 
 Everything runs locally on this Mac — no CI secrets, no GitHub Releases.
 Same manual-publish model as DKB Monitor / DKB Clamshell: build and sign
 here, upload by hand to admin.dangkhoabach.vn, and Sparkle inside the
 installed app picks the new version up from
-`updates.dangkhoabach.vn/dkb-source-control/appcast.xml` (plan D19, changed
+`updates.dangkhoabach.vn/dkb-source-control/appcast.xml` (since
 2026-10-09: 1.0.0 was installed on this Mac only and has no updater, so
 1.0.1 is installed by hand once; Sparkle takes it from there).
 
 ## Why a self-signed certificate
 
 No Apple Developer Program membership, so no Developer ID signing and no
-notarization. Builds are signed with the self-signed **"DKB Source Control
+notarization. Builds are signed with the self-signed **"SourceDeck
 Local Signing"** certificate from `scripts/create-signing-cert.sh` (named in
-the gitignored `Local.xcconfig`) rather than ad-hoc (plan D1):
+the gitignored `Local.xcconfig`) rather than ad-hoc:
 
 - The app runs `git` in every repository it lists. macOS asks for Desktop,
   Documents or Downloads access on behalf of the app (git is its child
@@ -39,7 +39,7 @@ Security › **Open Anyway** on first launch.
    .sparkle-tools/2.6.4/bin/generate_keys --account dkb-source-control
    ```
    It prints the public half, which goes into `SUPublicEDKey` in
-   `DKBSourceControlApp/Info.plist`; the private half stays in the login
+   `SourceDeckApp/Info.plist`; the private half stays in the login
    Keychain. `--account` is required — without it the tools fall back to the
    default account and silently reuse DKB Monitor's key. `release.sh`
    downloads the tools (checksum-verified) on its first run, and refuses to
@@ -64,7 +64,7 @@ certificate has no Team ID — so the embedded `Sparkle.framework`, although
 signed by the very same certificate, is refused at launch ("mapping process
 and mapped file have different Team IDs"). As in DKB Clamshell, the
 `com.apple.security.cs.disable-library-validation` entitlement
-(`DKBSourceControlApp/DKBSourceControlApp.entitlements`) lifts only that
+(`SourceDeckApp/SourceDeckApp.entitlements`) lifts only that
 one check; `release.sh` verifies that it is the one and only entitlement.
 Checked on a Release build: it starts and maps Sparkle.
 
@@ -79,11 +79,11 @@ re-reading its release notes.
 ```
 
 The version goes into both `CFBundleShortVersionString` and
-`CFBundleVersion` in `DKBSourceControlApp/Info.plist` (a lower version than
+`CFBundleVersion` in `SourceDeckApp/Info.plist` (a lower version than
 the current one is refused). Before that, the Sparkle key in the Keychain
 is checked against `SUPublicEDKey`. Then, in order:
 
-1. `swift test` for `DKBSourceControlCore`, then the app's tests — a failure
+1. `swift test` for `SourceDeckCore`, then the app's tests — a failure
    stops the release before anything is built.
 2. Release build with the local certificate, universal (arm64 + x86_64), in a
    temporary DerivedData folder that is removed afterwards.
@@ -108,8 +108,8 @@ upload:
 
 | Form field | File |
 |---|---|
-| Installer file | `DKB-Source-Control-<version>.dmg` |
-| Sparkle signature (.sig) | `DKB-Source-Control-<version>.dmg.sig` (paste its contents) |
+| Installer file | `SourceDeck-<version>.dmg` |
+| Sparkle signature (.sig) | `SourceDeck-<version>.dmg.sig` (paste its contents) |
 
 Leave the Tauri-format "Updater bundle"/"Signature" fields empty. Compare
 the SHA-256 the script printed with the uploaded file: the DMG and the
@@ -123,7 +123,7 @@ the update.
 ./scripts/install-local.sh 1.0.0
 ```
 
-Quits the running app, replaces `/Applications/DKB Source Control.app` and
+Quits the running app, replaces `/Applications/SourceDeck.app` and
 opens it.
 
 The installed app keeps its list of repositories in
@@ -137,7 +137,7 @@ repository in a few seconds.
 
 - `./scripts/release.sh 1.0.0`: 142 Core and 19 app tests passed; signed,
   Hardened Runtime, no entitlements, arm64 + x86_64; 1 min 58 s in all.
-- `DKB-Source-Control-1.0.0.dmg`: 5.2 MB, SHA-256
+- `SourceDeck-1.0.0.dmg`: 5.2 MB, SHA-256
   `9476feed1b5573b28d6dd315b52d940c0bcb9871ee980ebe7e32cee1be4f1171`; the app
   is 18 MB.
 - Installed to `/Applications`: starts, finds `/usr/bin/git` 2.54.0 and the
