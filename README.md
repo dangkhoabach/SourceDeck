@@ -168,7 +168,7 @@ parsers, patch building, commit message rules, GRDB storage). Both test
 suites run on throwaway repositories with the real git — nothing is mocked:
 
 ```bash
-cd SourceDeckCore && swift test                                        # 182 tests
+cd SourceDeckCore && swift test                                        # 183 tests
 xcodebuild -project SourceDeck.xcodeproj -scheme SourceDeckApp test    # 37 tests
 ```
 
