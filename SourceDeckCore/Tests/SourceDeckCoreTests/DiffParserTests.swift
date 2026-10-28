@@ -128,7 +128,10 @@ import Testing
         let text = "diff --git a/big b/big\nnew file mode 100644\n--- /dev/null\n+++ b/big\n@@ -0,0 +1,20000 @@\n\(body)\n"
         let start = ContinuousClock.now
         let file = try parseOne(text)
-        #expect(ContinuousClock.now - start < .milliseconds(500))
+        // A shared CI runner (3 cores, a debug build, every other suite in
+        // parallel) took 0.7 s; a parser gone quadratic would take far longer.
+        let budget: Duration = ProcessInfo.processInfo.environment["CI"] == nil ? .milliseconds(500) : .seconds(2)
+        #expect(ContinuousClock.now - start < budget)
         #expect(file.hunks[0].lines.count == 20_000)
         #expect(!file.isTooLarge)
     }

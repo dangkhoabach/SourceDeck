@@ -33,9 +33,13 @@ jobs:
           sudo xcode-select -s "$LATEST"
           xcodebuild -version
 
+      # One test at a time. With every suite in parallel on a fresh runner, all
+      # the git calls stalled for about 50 s at once and hit the 30 s timeout;
+      # git itself was fast there, and the same tests passed in smaller batches
+      # and one by one. Locally the parallel run is unaffected.
       - name: Test SourceDeckCore (headless package)
         working-directory: SourceDeckCore
-        run: swift test
+        run: swift test --no-parallel
 
       # Local.xcconfig is gitignored (per-machine signing identity); the
       # example is ad-hoc, which is all a compile check needs.
