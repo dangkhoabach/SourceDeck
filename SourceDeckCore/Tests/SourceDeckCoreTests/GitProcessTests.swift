@@ -68,6 +68,24 @@ import Testing
         #expect(ContinuousClock.now - start < .seconds(3))
     }
 
+    @Test func timeoutStillFiresWhileManyProcessesRun() async throws {
+        // 80 running processes used to hold 160 dispatch threads in blocking
+        // reads, past the 64 the global queues allow, so this timer waited
+        // for them to exit.
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            for _ in 0..<80 {
+                group.addTask { _ = try await ProcessRunner.run(self.shell("sleep 2"), stdin: nil, timeout: .seconds(20)) }
+            }
+            try await Task.sleep(for: .milliseconds(300))
+            let start = ContinuousClock.now
+            await #expect(throws: GitError.timedOut(.milliseconds(300))) {
+                try await ProcessRunner.run(shell("sleep 10"), stdin: nil, timeout: .milliseconds(300))
+            }
+            #expect(ContinuousClock.now - start < .seconds(1))
+            try await group.waitForAll()
+        }
+    }
+
     @Test func cancellationTerminatesTheProcess() async throws {
         let start = ContinuousClock.now
         let task = Task { try await ProcessRunner.run(shell("sleep 10"), stdin: nil, timeout: .seconds(30)) }

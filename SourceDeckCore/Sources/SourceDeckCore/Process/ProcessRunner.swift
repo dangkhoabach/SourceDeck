@@ -8,10 +8,14 @@ struct ProcessOutput: Sendable {
 
 /// Runs one `Process` to completion without blocking the caller.
 ///
-/// stdout and stderr are drained on their own threads while the process runs:
+/// stdout and stderr are drained as data arrives while the process runs:
 /// reading them one after the other deadlocks as soon as the unread one fills
-/// its 64 KB pipe buffer (a large `git log` or diff does). The timeout and
-/// task cancellation both terminate the process; neither leaves it running.
+/// its 64 KB pipe buffer (a large `git log` or diff does). Nothing blocks a
+/// dispatch thread while it waits: the global queues stop at 64 threads, and
+/// a blocking read per pipe used them all once a few dozen git commands ran
+/// at once, so the timeout timers and the completions never got a thread.
+/// The timeout and task cancellation both terminate the process; neither
+/// leaves it running.
 enum ProcessRunner {
     static func run(_ process: Process, stdin: Data?, timeout: Duration) async throws -> ProcessOutput {
         let stdoutPipe = Pipe()
@@ -37,17 +41,12 @@ enum ProcessRunner {
                 state.started()
 
                 group.enter()
-                DispatchQueue.global().async {
-                    state.setStdout(stdoutPipe.fileHandleForReading.readDataToEndOfFile())
-                    group.leave()
-                }
+                drain(stdoutPipe, into: state.appendStdout, then: group.leave)
                 group.enter()
-                DispatchQueue.global().async {
-                    state.setStderr(stderrPipe.fileHandleForReading.readDataToEndOfFile())
-                    group.leave()
-                }
+                drain(stderrPipe, into: state.appendStderr, then: group.leave)
                 if let stdin, let stdinPipe {
-                    DispatchQueue.global().async {
+                    // A blocking write, on its own thread for the same reason.
+                    Thread.detachNewThread {
                         let handle = stdinPipe.fileHandleForWriting
                         // A process that exits before reading all of stdin
                         // (a rejected patch) must not take the app down with
@@ -68,6 +67,20 @@ enum ProcessRunner {
             }
         } onCancel: {
             state.terminate(timedOut: false)
+        }
+    }
+
+    /// Reads `pipe` until end of file without holding a thread in between.
+    private static func drain(_ pipe: Pipe, into append: @escaping @Sendable (Data) -> Void,
+                              then done: @escaping @Sendable () -> Void) {
+        pipe.fileHandleForReading.readabilityHandler = { handle in
+            let chunk = handle.availableData
+            if chunk.isEmpty {
+                handle.readabilityHandler = nil
+                done()
+            } else {
+                append(chunk)
+            }
         }
     }
 }
@@ -91,8 +104,8 @@ private final class RunState: @unchecked Sendable {
         if lock.withLock({ cancelled }) { process.terminate() }
     }
 
-    func setStdout(_ data: Data) { lock.withLock { stdout = data } }
-    func setStderr(_ data: Data) { lock.withLock { stderr = data } }
+    func appendStdout(_ data: Data) { lock.withLock { stdout.append(data) } }
+    func appendStderr(_ data: Data) { lock.withLock { stderr.append(data) } }
 
     func terminate(timedOut: Bool) {
         let running = lock.withLock {
