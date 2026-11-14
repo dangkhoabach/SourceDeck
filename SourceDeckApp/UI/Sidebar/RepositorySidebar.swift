@@ -2,8 +2,9 @@ import AppKit
 import SourceDeckCore
 import SwiftUI
 
-/// Dashboard, then the repositories in the user's order (drag to reorder).
-/// Dropping folders from Finder adds them.
+/// Dashboard, then the repositories in the user's order (drag to reorder),
+/// with Settings pinned under them as in the author's other apps. Dropping
+/// folders from Finder adds them.
 struct RepositorySidebar: View {
     @Bindable var list: RepositoryList
     @State private var renaming: RepositoryModel?
@@ -12,8 +13,10 @@ struct RepositorySidebar: View {
 
     var body: some View {
         List(selection: $list.selection) {
-            Label("Dashboard", systemImage: "square.grid.2x2")
-                .tag(RepositoryList.Selection.dashboard)
+            Section("Overview") {
+                Label("Dashboard", systemImage: "square.grid.2x2")
+                    .tag(RepositoryList.Selection.dashboard)
+            }
             Section("Repositories") {
                 ForEach(list.models) { model in
                     RepositoryRow(model: model)
@@ -36,13 +39,17 @@ struct RepositorySidebar: View {
             Task { await list.add(urls) }
             return !urls.isEmpty
         }
-        .safeAreaInset(edge: .bottom) {
-            HStack {
-                AddMenuButton(list: list)
-                    .fixedSize()
-                Spacer()
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            VStack(spacing: 0) {
+                HStack {
+                    AddMenuButton(list: list)
+                        .fixedSize()
+                    Spacer()
+                }
+                .padding(10)
+                // Settings is its own window here, so the row never shows as selected.
+                SidebarSettingsRow(isSelected: false) { WindowPresenter.showSettings() }
             }
-            .padding(10)
         }
         .alert("Rename Repository", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
             TextField("Name", text: $draftName)
