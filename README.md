@@ -31,6 +31,8 @@ Three things set it apart from a general-purpose client:
   changed and new files, the last commit; refresh all, fetch all, optional
   automatic fetch. Add a repository by cloning it from a URL, choosing a
   folder, dropping it on the sidebar or scanning a folder for repositories.
+- **Menu bar panel** with the same list in short: each repository's branch,
+  ahead and behind and how many files changed, one click to open it.
 - **Working Copy** (⌘1): Staged and Changes lists with a checkbox per file,
   rename and conflict markers, a filter, and files that look like secrets
   tinted red. Shown as a flat list or as a tree of folders that open and

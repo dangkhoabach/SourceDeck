@@ -15,12 +15,15 @@ struct SourceDeckApp: App {
     }
 
     var body: some Scene {
-        WindowGroup {
+        WindowGroup(id: WindowPresenter.mainWindowID) {
             ContentView()
                 .environment(\.locale, appLocale.locale)
         }
         .defaultSize(width: 1440, height: 900)
         .commands {
+            CommandGroup(replacing: .appInfo) {
+                Button("About SourceDeck") { AboutWindow.show() }
+            }
             // Sparkle's usual place, under About, as in the sibling apps.
             CommandGroup(after: .appInfo) {
                 Button("Check for Updates…") { AppUpdater.checkForUpdates() }

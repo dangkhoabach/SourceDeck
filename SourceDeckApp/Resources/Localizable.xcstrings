@@ -35,7 +35,7 @@
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld đã sửa"
+            "value" : "%lld tệp đã đổi"
           }
         }
       }
@@ -4583,6 +4583,106 @@
     },
     "↓%lld" : {
       "shouldTranslate" : false
+    },
+    "About SourceDeck" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Giới thiệu SourceDeck"
+          }
+        }
+      }
+    },
+    "A native Git client for everyday work." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ứng dụng Git gốc cho công việc hằng ngày."
+          }
+        }
+      }
+    },
+    "Version %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phiên bản %@"
+          }
+        }
+      }
+    },
+    "Released %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phát hành %@"
+          }
+        }
+      }
+    },
+    "Website" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trang web"
+          }
+        }
+      }
+    },
+    "Show SourceDeck" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiện SourceDeck"
+          }
+        }
+      }
+    },
+    "Quit SourceDeck" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thoát SourceDeck"
+          }
+        }
+      }
+    },
+    "%lld with changes" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld repo có thay đổi"
+          }
+        }
+      }
+    },
+    "And %lld more" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Và %lld repo khác"
+          }
+        }
+      }
+    },
+    "Settings…" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cài đặt…"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

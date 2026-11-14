@@ -11,6 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        StatusBarController.shared.start()
         // Hosting the app's tests, which make their own repositories: the
         // list would read, and fetch, the user's real ones.
         guard ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil else { return }
